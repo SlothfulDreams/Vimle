@@ -1,3 +1,5 @@
+# Vimle
+
 Generated with [vike.dev/new](https://vike.dev/new) ([version 462](https://www.npmjs.com/package/create-vike/v/0.0.462)) using this command:
 
 ```sh
@@ -94,4 +96,3 @@ use the `<Button />` component in your project:
 `import { Button } from "@/components/ui/button";`
 
 more [shadcn/ui components](https://ui.shadcn.com/docs/components/accordion)
-
