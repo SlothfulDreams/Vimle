@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
 export type TileState = "correct" | "partial" | "incorrect" | "empty";
 
@@ -9,7 +10,7 @@ interface MotionTileProps {
   className?: string;
 }
 
-export function MotionTile({ motion, state, className }: MotionTileProps) {
+export const MotionTile = memo(function MotionTile({ motion, state, className }: MotionTileProps) {
   const stateClasses = {
     correct: "bg-green-500 hover:bg-green-600 text-white border-green-500 dark:bg-green-600 dark:hover:bg-green-700 dark:border-green-600",
     partial: "bg-yellow-500 hover:bg-yellow-600 text-white border-yellow-500 dark:bg-yellow-600 dark:hover:bg-yellow-700 dark:border-yellow-600", 
@@ -29,4 +30,4 @@ export function MotionTile({ motion, state, className }: MotionTileProps) {
       {motion || "?"}
     </Badge>
   );
-}
+});

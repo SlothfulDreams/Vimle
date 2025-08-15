@@ -5,7 +5,7 @@ export function Challenge() {
         Challenge
       </h2>
       <p className="text-foreground">
-        Navigate to the <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">Calculator</code> class and delete the entire <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">add</code> method using Vim motions
+        Use Vim motions to move down two lines, then forward one word: <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">j</code> <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">j</code> <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">w</code>
       </p>
     </div>
   );

@@ -1,4 +1,5 @@
 import { MotionTile, type TileState } from "./MotionTile";
+import { memo } from "react";
 
 interface Motion {
   command: string;
@@ -9,9 +10,10 @@ interface AttemptRowProps {
   motions: Motion[];
   maxMotions?: number;
   className?: string;
+  rowId?: string;
 }
 
-export function AttemptRow({ motions, maxMotions = 6, className }: AttemptRowProps) {
+export const AttemptRow = memo(function AttemptRow({ motions, maxMotions = 6, className, rowId }: AttemptRowProps) {
   // Pad the motions array to always show the max number of tiles
   const paddedMotions = [...motions];
   while (paddedMotions.length < maxMotions) {
@@ -22,11 +24,11 @@ export function AttemptRow({ motions, maxMotions = 6, className }: AttemptRowPro
     <div className={`flex gap-2 ${className || ""}`}>
       {paddedMotions.slice(0, maxMotions).map((motion, index) => (
         <MotionTile
-          key={index}
+          key={`${rowId || 'row'}-${index}`}
           motion={motion.command}
           state={motion.state}
         />
       ))}
     </div>
   );
-}
+});

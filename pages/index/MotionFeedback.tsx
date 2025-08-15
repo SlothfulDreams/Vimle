@@ -1,6 +1,19 @@
-import { useState } from "react";
 import { AttemptRow } from "./AttemptRow";
 import { TileState } from "./MotionTile";
+import { useMemo } from "react";
+
+// Helper function to determine tile state based on Wordle-like logic
+function getTileState(motion: string, position: number, targetSequence: string[]): TileState {
+  if (targetSequence[position] === motion) {
+    return "correct"; // Exact match at correct position
+  }
+  
+  if (targetSequence.includes(motion)) {
+    return "partial"; // Motion exists in target but wrong position
+  }
+  
+  return "incorrect"; // Motion doesn't exist in target sequence
+}
 
 interface Motion {
   command: string;
@@ -8,29 +21,29 @@ interface Motion {
 }
 
 interface Attempt {
+  id: string;
   motions: Motion[];
 }
 
-export function MotionFeedback() {
-  // Sample data - in real implementation this would come from game state
-  const [attempts] = useState<Attempt[]>([
-    {
-      motions: [
-        { command: "3j", state: "correct" },
-        { command: "w", state: "partial" },
-        { command: "dd", state: "incorrect" },
-      ],
-    },
-    {
-      motions: [
-        { command: "2j", state: "incorrect" },
-        { command: "2w", state: "correct" },
-        { command: "dd", state: "correct" },
-      ],
-    },
-  ]);
+interface MotionFeedbackProps {
+  attempts: Attempt[];
+  currentMotions: string[];
+  targetSequence?: string[];
+}
 
+export function MotionFeedback({ attempts, currentMotions, targetSequence = [] }: MotionFeedbackProps) {
   const maxAttempts = 6;
+
+  // Memoize current attempt to prevent unnecessary re-renders
+  const currentAttempt = useMemo((): Attempt => ({
+    id: "current",
+    motions: currentMotions.map((cmd, index) => ({ 
+      command: cmd, 
+      state: targetSequence[index] !== undefined
+        ? getTileState(cmd, index, targetSequence)
+        : "empty" as TileState
+    }))
+  }), [currentMotions, targetSequence]);
 
   return (
     <div className="w-[320px]">
@@ -38,13 +51,21 @@ export function MotionFeedback() {
         Attempts
       </h3>
       <div className="space-y-2">
-        {attempts.map((attempt, index) => (
-          <AttemptRow key={index} motions={attempt.motions} />
+        {/* Completed attempts */}
+        {attempts.map((attempt) => (
+          <AttemptRow key={attempt.id} motions={attempt.motions} rowId={attempt.id} />
         ))}
         
+        {/* Current attempt in progress (if any motions captured) */}
+        {currentMotions.length > 0 && attempts.length < maxAttempts && (
+          <AttemptRow key={currentAttempt.id} motions={currentAttempt.motions} rowId={currentAttempt.id} />
+        )}
+        
         {/* Empty rows for remaining attempts */}
-        {Array.from({ length: maxAttempts - attempts.length }, (_, index) => (
-          <AttemptRow key={`empty-${index}`} motions={[]} />
+        {Array.from({ 
+          length: maxAttempts - attempts.length - (currentMotions.length > 0 ? 1 : 0) 
+        }, (_, index) => (
+          <AttemptRow key={`empty-${index}`} motions={[]} rowId={`empty-${index}`} />
         ))}
       </div>
     </div>
