@@ -10,9 +10,9 @@ export default {
   Layout,
 
   // https://vike.dev/head-tags
-  title: "My Vike App",
+  title: "Vimle - Vim Motion Trainer",
 
-  description: "Demo showcasing Vike",
+  description: "Learn and practice Vim motions with Wordle-style feedback",
   extends: vikeReact,
   prerender: true,
 } satisfies Config;
