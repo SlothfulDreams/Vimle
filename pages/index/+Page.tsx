@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useReducer, useCallback } from "react";
 import { VimEditor } from "./VimEditor";
 import { MotionFeedback } from "./MotionFeedback";
 import { CenteredLayout } from "./CenteredLayout";
@@ -34,56 +34,88 @@ interface Attempt {
   motions: Motion[];
 }
 
+interface GameState {
+  attempts: Attempt[];
+  currentMotions: string[];
+  resetTrigger: number;
+}
+
+type GameAction = 
+  | { type: 'ADD_MOTION'; motion: string }
+  | { type: 'COMPLETE_ATTEMPT'; attempt: Attempt }
+  | { type: 'RESET_GAME' };
+
+function gameReducer(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case 'ADD_MOTION':
+      return {
+        ...state,
+        currentMotions: [...state.currentMotions, action.motion]
+      };
+    case 'COMPLETE_ATTEMPT':
+      const newAttempts = [...state.attempts, action.attempt];
+      return {
+        ...state,
+        attempts: newAttempts,
+        currentMotions: [], // Clear current motions atomically
+        resetTrigger: newAttempts.length >= 6 ? state.resetTrigger + 1 : state.resetTrigger
+      };
+    case 'RESET_GAME':
+      return {
+        attempts: [],
+        currentMotions: [],
+        resetTrigger: state.resetTrigger + 1
+      };
+    default:
+      return state;
+  }
+}
+
 export default function VimleGame() {
   // Dummy target sequence for testing
   const targetSequence = ["j", "j", "w"];
 
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [currentMotions, setCurrentMotions] = useState<string[]>([]);
-  const [resetTrigger, setResetTrigger] = useState(0);
+  const [gameState, dispatch] = useReducer(gameReducer, {
+    attempts: [],
+    currentMotions: [],
+    resetTrigger: 0
+  });
+
+  const { attempts, currentMotions, resetTrigger } = gameState;
 
   const handleMotionCapture = useCallback(
     (motion: string) => {
-      setCurrentMotions((prev) => {
-        const newMotions = [...prev, motion];
+      const newMotions = [...currentMotions, motion];
 
-        // If we've captured enough motions for this attempt
-        if (newMotions.length >= targetSequence.length) {
-          // Compare with target sequence and assign states
-          const motionObjects: Motion[] = newMotions.map((cmd, index) => ({
-            command: cmd,
-            state: getTileState(cmd, index, targetSequence),
-          }));
+      // If we've captured enough motions for this attempt
+      if (newMotions.length >= targetSequence.length) {
+        // Compare with target sequence and assign states
+        const motionObjects: Motion[] = newMotions.map((cmd, index) => ({
+          command: cmd,
+          state: getTileState(cmd, index, targetSequence),
+        }));
 
-          // Add completed attempt
-          setAttempts((prevAttempts) => {
-            const newAttempts = [
-              ...prevAttempts,
-              {
-                id: `attempt-${Date.now()}-${prevAttempts.length}`,
-                motions: motionObjects,
-              },
-            ];
+        // Create completed attempt
+        const completedAttempt: Attempt = {
+          id: `attempt-${Date.now()}-${attempts.length}`,
+          motions: motionObjects,
+        };
 
-            // If we've reached max attempts, reset the game
-            if (newAttempts.length >= 6) {
-              setTimeout(() => {
-                setAttempts([]);
-                setResetTrigger((prev) => prev + 1);
-              }, 1000);
-            }
+        // Dispatch atomic state update
+        dispatch({ type: 'COMPLETE_ATTEMPT', attempt: completedAttempt });
 
-            return newAttempts;
-          });
-
-          // Clear current motions to start next attempt
-          return [];
+        // If this would be the 6th attempt, reset after delay
+        if (attempts.length + 1 >= 6) {
+          setTimeout(() => {
+            dispatch({ type: 'RESET_GAME' });
+          }, 1000);
         }
-
-        return newMotions;
-      });
+      } else {
+        // Normal motion capture
+        dispatch({ type: 'ADD_MOTION', motion });
+      }
     },
-    [targetSequence],
+    [currentMotions, targetSequence, attempts.length],
   );
 
   return (
