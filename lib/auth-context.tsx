@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Only run on client-side when supabase client is available
-    if (!supabase || typeof window === 'undefined') {
+    if (!supabase || typeof window === "undefined") {
       setLoading(false);
       return;
     }
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) {
-      return { error: new Error('Supabase client not available') };
+      return { error: new Error("Supabase client not available") };
     }
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string) => {
     if (!supabase) {
-      return { error: new Error('Supabase client not available') };
+      return { error: new Error("Supabase client not available") };
     }
     const { error } = await supabase.auth.signUp({ email, password });
     return { error };
@@ -66,7 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     if (!supabase) {
-      return { error: new Error('Supabase client not available') };
+      return { error: new Error("Supabase client not available") };
     }
     const { error } = await supabase.auth.signOut();
     return { error };
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     if (!supabase) {
-      return { error: new Error('Supabase client not available') };
+      return { error: new Error("Supabase client not available") };
     }
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -105,4 +105,3 @@ export function useAuth() {
   }
   return context;
 }
-
