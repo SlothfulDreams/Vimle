@@ -1,6 +1,7 @@
 import "./style.css";
 import "./tailwind.css";
 import { ThemeProvider } from "next-themes";
+import { AuthProvider } from "../lib/auth-context";
 
 export default function LayoutDefault({
   children,
@@ -14,7 +15,9 @@ export default function LayoutDefault({
       enableSystem={false}
       disableTransitionOnChange={false}
     >
-      <div className="min-h-screen bg-background">{children}</div>
+      <AuthProvider>
+        <div className="min-h-screen bg-background">{children}</div>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
