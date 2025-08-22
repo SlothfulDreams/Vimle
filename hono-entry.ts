@@ -1,3 +1,6 @@
+// Load environment variables before any other imports
+import "dotenv/config";
+
 import { vikeHandler } from "./server/vike-handler";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";

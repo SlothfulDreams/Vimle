@@ -82,6 +82,7 @@ export const appRouter = router({
   submitCompletion: publicProcedure
     .input(z.object({
       userId: z.string(),
+      userEmail: z.string().email().optional(),
       challengeId: z.string(),
       timeMs: z.number().positive(),
       challengeDate: z.string()
@@ -92,7 +93,7 @@ export const appRouter = router({
         const todaysChallenge = getTodaysChallenge();
         
         // Ensure user exists in database
-        await ensureUser(input.userId);
+        await ensureUser(input.userId, input.userEmail);
         
         // Ensure challenge exists in database
         await ensureChallenge(
@@ -139,8 +140,25 @@ export const appRouter = router({
           message: 'Challenge completed successfully!'
         };
       } catch (error) {
-        console.error('Failed to save challenge completion:', error);
-        throw new Error('Failed to save challenge completion to database');
+        console.error('Failed to save challenge completion:', {
+          userId: input.userId,
+          userEmail: input.userEmail,
+          challengeId: input.challengeId,
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes('unique constraint')) {
+            throw new Error('Challenge attempt already exists for this user');
+          }
+          if (error.message.includes('foreign key')) {
+            throw new Error('Invalid user or challenge reference');
+          }
+        }
+        
+        throw new Error(`Failed to save challenge completion: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
 

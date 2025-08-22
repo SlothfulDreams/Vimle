@@ -7,7 +7,6 @@ import { Challenge } from "./Challenge";
 import { useChallenge } from "@/lib/challenge-context";
 
 // Lazy load conditional components for better code splitting
-const CompletionPopup = lazy(() => import("./CompletionPopup").then(m => ({ default: m.CompletionPopup })));
 const TomorrowScreen = lazy(() => import("./TomorrowScreen").then(m => ({ default: m.TomorrowScreen })));
 
 
@@ -19,9 +18,7 @@ export default function VimleGame() {
     canAttempt, 
     submitCompletion, 
     loading,
-    showCompletionPopup,
-    showTomorrowScreen,
-    dismissCompletionPopup
+    showTomorrowScreen
   } = useChallenge();
   
   const [resetTrigger, setResetTrigger] = useState(0);
@@ -31,6 +28,8 @@ export default function VimleGame() {
   const [leftEditorContent, setLeftEditorContent] = useState("");
   const [rightEditorContent, setRightEditorContent] = useState("");
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const comparisonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -101,14 +100,27 @@ export default function VimleGame() {
         console.log(`Timer stopped! Completed in ${(completionTime / 1000).toFixed(2)} seconds`);
         
         // Submit completion to the challenge system
-        if (canAttempt) {
-          submitCompletion(completionTime).catch(console.error);
+        if (canAttempt && !isSubmitting) {
+          setIsSubmitting(true);
+          setSubmissionError(null);
+          
+          submitCompletion(completionTime)
+            .then(() => {
+              console.log('Challenge completion submitted successfully');
+            })
+            .catch((error) => {
+              console.error('Failed to submit completion:', error);
+              setSubmissionError(error instanceof Error ? error.message : 'Failed to save your completion. Please try again.');
+            })
+            .finally(() => {
+              setIsSubmitting(false);
+            });
         }
       } else {
         console.log('Content does not match despite same length');
       }
     }
-  }, [hasUserInteracted, isTimerRunning, normalizedLeftContent, normalizedRightContent, startTime, canAttempt, submitCompletion]);
+  }, [hasUserInteracted, isTimerRunning, normalizedLeftContent, normalizedRightContent, startTime, canAttempt, submitCompletion, isSubmitting]);
 
   // Debounced content comparison (300ms delay)
   useEffect(() => {
@@ -235,6 +247,30 @@ export default function VimleGame() {
             </div>
           )}
 
+          {/* Submission Status */}
+          {isSubmitting && (
+            <div className="text-center text-sm text-blue-600">
+              <div className="inline-flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                Saving your completion...
+              </div>
+            </div>
+          )}
+
+          {/* Error Display */}
+          {submissionError && (
+            <div className="text-center text-sm bg-red-50 border border-red-200 rounded-lg p-3 max-w-md">
+              <div className="text-red-800 font-medium">⚠️ Save Failed</div>
+              <div className="text-red-600 mt-1">{submissionError}</div>
+              <button 
+                onClick={() => setSubmissionError(null)}
+                className="mt-2 text-xs text-red-600 underline hover:text-red-800"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
 
           {/* Main Content - Two Editors Side by Side */}
           {todaysChallenge && (
@@ -259,18 +295,6 @@ export default function VimleGame() {
         </div>
       </CenteredLayout>
 
-      {/* Completion Popup - shows immediately after completion */}
-      {showCompletionPopup && todaysChallenge && userAttempt && (
-        <Suspense fallback={null}>
-          <CompletionPopup
-            isOpen={showCompletionPopup}
-            onClose={dismissCompletionPopup}
-            completionTimeMs={userAttempt.timeMs || 0}
-            challengeTitle={todaysChallenge.title}
-            difficulty={todaysChallenge.difficulty}
-          />
-        </Suspense>
-      )}
 
     </>
   );

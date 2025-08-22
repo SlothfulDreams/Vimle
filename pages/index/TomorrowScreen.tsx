@@ -51,7 +51,7 @@ export function TomorrowScreen({
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+    <div className="fixed inset-0 min-h-screen bg-background flex items-center justify-center p-6 z-50">
       <div className="w-full max-w-lg space-y-8 text-center">
         
         {/* Header */}
@@ -64,12 +64,17 @@ export function TomorrowScreen({
           </p>
         </div>
 
-        {/* Completion Summary */}
+        {/* Celebration Header */}
         <div className="space-y-4">
+          <div className="text-6xl animate-bounce">🎉</div>
+          <h2 className="text-2xl font-bold text-foreground">
+            Challenge Completed!
+          </h2>
+          
           <div className="flex items-center justify-center gap-3">
-            <h2 className="text-lg font-semibold text-foreground">
+            <h3 className="text-lg font-semibold text-foreground">
               {challengeTitle}
-            </h2>
+            </h3>
             <Badge 
               variant="outline"
               className={cn("text-xs font-medium capitalize", getDifficultyColor(difficulty))}
@@ -82,16 +87,16 @@ export function TomorrowScreen({
           <div className="bg-muted/20 rounded-lg p-4 border">
             <div className="flex items-center justify-center gap-2">
               <div className="text-2xl">✅</div>
-              <div className="text-sm text-muted-foreground">Challenge Completed</div>
+              <div className="text-sm text-muted-foreground">Amazing work!</div>
             </div>
           </div>
         </div>
 
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-muted/20 rounded-lg p-4 border">
-            <div className="text-xs text-muted-foreground mb-1">Your Time</div>
-            <div className="text-2xl font-mono font-bold text-foreground">
+        {/* Time Display - Prominent */}
+        <div className="space-y-4">
+          <div className="bg-muted/30 rounded-lg p-6 border">
+            <div className="text-sm text-muted-foreground mb-2">Your Time</div>
+            <div className="text-4xl font-mono font-bold text-foreground">
               {timeInSeconds}s
             </div>
           </div>

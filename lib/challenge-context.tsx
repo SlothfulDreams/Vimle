@@ -29,14 +29,12 @@ interface ChallengeContextType {
   canAttempt: boolean;
   loading: boolean;
   
-  // Popup states
-  showCompletionPopup: boolean;
+  // UI states
   showTomorrowScreen: boolean;
   
   // Actions
   submitCompletion: (timeMs: number) => Promise<void>;
   refreshChallenge: () => Promise<void>;
-  dismissCompletionPopup: () => void;
   setTomorrowScreen: (show: boolean) => void;
 }
 
@@ -49,8 +47,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [localAttemptLoaded, setLocalAttemptLoaded] = useState(false);
   
-  // Popup state management
-  const [showCompletionPopup, setShowCompletionPopup] = useState(false);
+  // UI state management
   const [showTomorrowScreen, setShowTomorrowScreen] = useState(false);
 
   // tRPC queries
@@ -171,9 +168,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const canAttempt = !isCompleted;
 
 
-  // Determine tomorrow screen visibility when completion popup is dismissed
+  // Determine tomorrow screen visibility when challenge is completed
   useEffect(() => {
-    if (!loading && !showCompletionPopup && isCompleted && todaysChallenge) {
+    if (!loading && isCompleted && todaysChallenge) {
       const tomorrowScreenSeen = checkIfTomorrowScreenSeen();
       
       if (!tomorrowScreenSeen) {
@@ -185,11 +182,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
           sessionStorage.setItem(tomorrowKey, 'true');
         }
       }
-    } else if (showCompletionPopup) {
-      // Hide tomorrow screen when popup is open
-      setShowTomorrowScreen(false);
     }
-  }, [loading, showCompletionPopup, isCompleted, todaysChallenge, checkIfTomorrowScreenSeen, getTomorrowScreenKey]);
+  }, [loading, isCompleted, todaysChallenge, checkIfTomorrowScreenSeen, getTomorrowScreenKey]);
 
   // Submit completion
   const submitCompletion = useCallback(async (timeMs: number) => {
@@ -202,6 +196,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         const result = await submitCompletionMutation.mutateAsync({
           userId: user.id,
+          userEmail: user.email,
           challengeId: todaysChallenge.id,
           timeMs,
           challengeDate: todaysChallenge.date
@@ -230,8 +225,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       
       setUserAttempt(newAttempt);
       
-      // Show completion popup for immediate feedback
-      setShowCompletionPopup(true);
+      // Show tomorrow screen immediately after completion
+      setShowTomorrowScreen(true);
 
     } catch (error) {
       console.error('Failed to submit completion:', error);
@@ -247,10 +242,6 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     ]);
   }, [todaysChallengeQuery, userAttemptQuery, user]);
 
-  // Dismiss completion popup
-  const dismissCompletionPopup = useCallback(() => {
-    setShowCompletionPopup(false);
-  }, []);
 
 
   // Set tomorrow screen visibility
@@ -264,11 +255,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     isCompleted,
     canAttempt,
     loading,
-    showCompletionPopup,
     showTomorrowScreen,
     submitCompletion,
     refreshChallenge,
-    dismissCompletionPopup,
     setTomorrowScreen
   };
 
