@@ -4,23 +4,35 @@ import { vim } from "@replit/codemirror-vim";
 import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView, keymap } from "@codemirror/view";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import type { EditorView as EditorViewType } from "@codemirror/view";
+import { createVimKeyBindings } from "@/config/vimKeyBindings";
+import type { VimEditorProps } from "@/types";
 
-const sampleText = `function fibonacci(n) {
+/**
+ * Default sample code shown in editors
+ * Simple fibonacci function for vim practice
+ */
+const SAMPLE_CODE = `function fibonacci(n) {
   if (n <= 1) return n;
   return fibonacci(n - 1) + fibonacci(n - 2);
 }`;
 
-interface VimEditorProps {
-  onMotionCapture: (motion: any) => void;
-  onContentChange?: (content: string) => void;
-  onUserInteraction?: () => void;
-  resetTrigger: number;
-  readonly?: boolean;
-  initialContent?: string;
-}
+/**
+ * Editor configuration constants
+ */
+const EDITOR_CONFIG = {
+  height: "400px",
+  fontSize: "14px",
+  fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace',
+  borderRadius: "8px",
+  padding: "16px",
+} as const;
 
+/**
+ * Vim-enabled code editor component with motion capture
+ * Provides a CodeMirror editor with vim keybindings and dark theme
+ * Supports readonly mode and content synchronization
+ */
 export function VimEditor({
   onMotionCapture,
   onContentChange,
@@ -29,16 +41,16 @@ export function VimEditor({
   readonly = false,
   initialContent,
 }: VimEditorProps) {
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<{ view?: EditorViewType } | null>(null);
 
-  const onChange = useCallback(
-    (value: string, transaction: any) => {
-      // Here we could capture and parse motions
-      console.log("Editor value changed:", value.length);
-
-      // Call user interaction for left editor (non-readonly) on any content change
+  /**
+   * Handles content changes in the editor
+   * Triggers user interaction callback for non-readonly editors
+   */
+  const handleContentChange = useCallback(
+    (value: string) => {
+      // Trigger user interaction on content change for writable editors
       if (!readonly && onUserInteraction) {
-        console.log("Triggering user interaction from onChange");
         onUserInteraction();
       }
 
@@ -47,116 +59,100 @@ export function VimEditor({
     [onContentChange, onUserInteraction, readonly],
   );
 
-  // Set initial content - use provided initialContent, fallback to sampleText for readonly, empty for writable
+  /**
+   * Initialize editor content based on props
+   * Sets appropriate default content for readonly vs writable editors
+   */
   useEffect(() => {
-    const content = initialContent || (readonly ? sampleText : "");
+    const content = initialContent || (readonly ? SAMPLE_CODE : "");
     onContentChange?.(content);
   }, [onContentChange, readonly, initialContent]);
 
-  // Reset editor content when resetTrigger changes
+  /**
+   * Reset editor content when resetTrigger changes
+   * Useful for clearing editor state between challenges
+   */
   useEffect(() => {
-    if (editorRef.current && resetTrigger > 0) {
+    if (editorRef.current?.view && resetTrigger > 0) {
       const view = editorRef.current.view;
-      if (view) {
-        view.dispatch({
-          changes: {
-            from: 0,
-            to: view.state.doc.length,
-            insert: sampleText,
-          },
-        });
-      }
+      view.dispatch({
+        changes: {
+          from: 0,
+          to: view.state.doc.length,
+          insert: SAMPLE_CODE,
+        },
+      });
     }
   }, [resetTrigger]);
 
+  /**
+   * CodeMirror extensions configuration
+   * Includes vim mode, syntax highlighting, theming, and key bindings
+   */
   const extensions = [
-    vim({ status: false }), // Disable vim status bar to prevent UI overlap
-    javascript({ jsx: true }),
-    oneDark, // Dark theme for terminal feel
-    EditorView.lineWrapping,
-    EditorView.editable.of(!readonly), // Make editor readonly if readonly prop is true
-    keymap.of([
-      {
-        key: "h",
-        run: () => {
-          onMotionCapture("h");
-          return false; // Let vim handle the motion
-        },
-      },
-      {
-        key: "j",
-        run: () => {
-          onMotionCapture("j");
-          return false;
-        },
-      },
-      {
-        key: "k",
-        run: () => {
-          onMotionCapture("k");
-          return false;
-        },
-      },
-      {
-        key: "l",
-        run: () => {
-          onMotionCapture("l");
-          return false;
-        },
-      },
-      {
-        key: "w",
-        run: () => {
-          onMotionCapture("w");
-          return false;
-        },
-      },
-      {
-        key: "b",
-        run: () => {
-          onMotionCapture("b");
-          return false;
-        },
-      },
-    ]),
-    EditorView.theme({
+    vim({ status: true }), // Enable vim with status bar
+    javascript({ jsx: true }), // JavaScript syntax highlighting with JSX support
+    oneDark, // Dark theme for better coding experience
+    EditorView.lineWrapping, // Enable line wrapping for long lines
+    EditorView.editable.of(!readonly), // Control editability based on readonly prop
+    keymap.of(createVimKeyBindings(onMotionCapture)), // Custom vim key bindings
+    EditorView.theme(createEditorTheme(readonly)), // Custom theme configuration
+  ];
+
+  /**
+   * Creates custom theme configuration for the editor
+   * Handles readonly state styling and responsive design
+   */
+  function createEditorTheme(isReadonly: boolean) {
+    return {
       "&": {
-        fontSize: "14px",
-        fontFamily: '"JetBrains Mono", "Fira Code", Consolas, monospace',
+        fontSize: EDITOR_CONFIG.fontSize,
+        fontFamily: EDITOR_CONFIG.fontFamily,
       },
       ".cm-editor": {
-        height: "400px",
-        border: readonly
+        height: EDITOR_CONFIG.height,
+        border: isReadonly
           ? "1px solid hsl(var(--muted-foreground))"
           : "1px solid hsl(var(--border))",
-        borderRadius: "8px",
-        overflow: "hidden",
-        backgroundColor: readonly ? "hsl(var(--muted) / 0.3)" : null,
+        borderRadius: EDITOR_CONFIG.borderRadius,
+        overflow: "visible", // Allow vim status bar to be visible
+        backgroundColor: isReadonly ? "hsl(var(--muted) / 0.3)" : null,
+      },
+      ".cm-vim-panel": {
+        backgroundColor: "hsl(var(--background))",
+        borderTop: "1px solid hsl(var(--border))",
+        padding: "2px 8px",
+        fontSize: "12px",
+        fontFamily: EDITOR_CONFIG.fontFamily,
       },
       ".cm-scroller": {
         height: "100%",
       },
       ".cm-content": {
-        padding: "16px",
+        padding: EDITOR_CONFIG.padding,
         minHeight: "100%",
-        cursor: readonly ? "default" : "text",
-        userSelect: readonly ? "none" : "text",
-        WebkitUserSelect: readonly ? "none" : "text",
+        cursor: isReadonly ? "default" : "text",
+        userSelect: isReadonly ? "none" : "text",
+        WebkitUserSelect: isReadonly ? "none" : "text",
       },
       ".cm-focused": {
         outline: "none",
       },
-    }),
-  ];
+    };
+  }
 
+  /**
+   * Prevents copying content in readonly mode
+   * Maintains challenge integrity by preventing content theft
+   */
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
       if (readonly) {
-        // Prevent copy shortcuts in readonly mode
-        if (
-          (event.ctrlKey || event.metaKey) &&
-          (event.key === "c" || event.key === "a" || event.key === "x")
-        ) {
+        // Block copy/select all/cut shortcuts in readonly mode
+        const isCopyShortcut = (event.ctrlKey || event.metaKey) &&
+          ["c", "a", "x"].includes(event.key.toLowerCase());
+        
+        if (isCopyShortcut) {
           event.preventDefault();
         }
       }
@@ -164,6 +160,10 @@ export function VimEditor({
     [readonly],
   );
 
+  /**
+   * Prevents right-click context menu in readonly mode
+   * Additional protection against content copying
+   */
   const handleContextMenu = useCallback(
     (event: React.MouseEvent) => {
       if (readonly) {
@@ -175,36 +175,30 @@ export function VimEditor({
 
   return (
     <div
-      className="w-[480px] relative"
+      className="w-[480px] relative overflow-visible"
       onKeyDown={handleKeyDown}
       onContextMenu={handleContextMenu}
     >
       <CodeMirror
         ref={editorRef}
-        value={initialContent || (readonly ? sampleText : "")}
-        height="400px"
+        value={initialContent || (readonly ? SAMPLE_CODE : "")}
+        height={EDITOR_CONFIG.height}
         extensions={extensions}
-        onChange={onChange}
+        onChange={handleContentChange}
+        theme={oneDark}
         basicSetup={{
           lineNumbers: true,
           foldGutter: true,
           dropCursor: false,
           allowMultipleSelections: false,
         }}
-        theme={oneDark}
       />
       {readonly && (
-        <Badge
-          variant="secondary"
-          className={cn(
-            "absolute top-2 right-2 z-10",
-            "text-xs font-medium",
-            "bg-muted/90 text-muted-foreground",
-            "border border-muted-foreground/20",
-          )}
-        >
-          READ ONLY
-        </Badge>
+        <div className="absolute top-2 right-2 z-10">
+          <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-muted/90 text-muted-foreground border border-muted-foreground/20">
+            READ ONLY
+          </span>
+        </div>
       )}
     </div>
   );

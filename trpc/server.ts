@@ -1,12 +1,32 @@
 import { initTRPC } from "@trpc/server";
 import { z } from "zod";
-import { getTodaysChallenge, getTodaysDate } from "@/lib/challenge-service";
-import {
-  generateTodaysChallenge,
-  getDifficultyForDate,
-} from "@/lib/gemini-challenge-generator";
-import { isGeminiEnabled } from "@/lib/env";
+import { generateChallengeForDate, getTodaysDate, getDifficultyForDate } from "@/lib/challenge";
+import { generateTodaysChallenge } from "@/lib/ai-generation";
+import { isGeminiEnabled } from "@/lib/ai-generation/config";
 import { db, ensureUser, ensureChallenge } from "@/prisma/database";
+import { logger } from "@/lib/logger";
+import type { DifficultyLevel } from "@/types";
+
+/**
+ * Zod validation schemas for tRPC procedures
+ * Ensures type safety and input validation across the API
+ */
+const schemas = {
+  userId: z.string().min(1, "User ID is required"),
+  userEmail: z.string().email("Invalid email format").optional(),
+  challengeId: z.string().min(1, "Challenge ID is required"),
+  challengeDate: z.string().min(1, "Challenge date is required"),
+  timeMs: z.number().positive("Time must be positive"),
+  difficulty: z.enum(["easy", "medium", "hard"]),
+  forceAI: z.boolean().optional().default(false),
+  localAttempt: z.object({
+    challengeId: z.string(),
+    challengeDate: z.string(),
+    completedAt: z.string(),
+    timeMs: z.number(),
+    difficulty: z.string(),
+  }),
+} as const;
 
 /**
  * Initialization of tRPC backend
@@ -37,11 +57,14 @@ export const appRouter = router({
       console.log("Received new todo", { text: opts.input });
     }),
 
-  // Challenge-related procedures
+  /**
+   * Retrieves today's challenge, generating one if it doesn't exist
+   * Handles both AI-generated and static challenges with graceful fallbacks
+   */
   getTodaysChallenge: publicProcedure.query(async () => {
     try {
       const today = getTodaysDate();
-      console.log(`🔍 Checking for today's challenge: ${today}`);
+      logger.info(`Checking for today's challenge: ${today}`);
 
       let existingChallenge = null;
 
@@ -53,16 +76,21 @@ export const appRouter = router({
           },
         });
       } catch (dbError) {
-        console.warn(
-          `! Database query failed, proceeding with generation:`,
-          dbError instanceof Error ? dbError.message : String(dbError),
+        logger.warn(
+          "Database query failed, proceeding with generation",
+          { error: dbError instanceof Error ? dbError.message : String(dbError) }
         );
         // Continue to generation - don't let DB errors stop us
       }
 
       if (existingChallenge) {
-        console.log(
-          `✅ Found existing challenge: ${existingChallenge.title} (${existingChallenge.generated_by})`,
+        logger.info(
+          "Found existing challenge",
+          { 
+            title: existingChallenge.title, 
+            generatedBy: existingChallenge.generated_by,
+            difficulty: existingChallenge.difficulty 
+          }
         );
         // Return existing challenge from database
         return {
@@ -70,19 +98,16 @@ export const appRouter = router({
           date: today,
           content: existingChallenge.content,
           title: existingChallenge.title,
-          difficulty: existingChallenge.difficulty as
-            | "easy"
-            | "medium"
-            | "hard",
+          difficulty: existingChallenge.difficulty as DifficultyLevel,
         };
       }
 
-      console.log(`🚀 No existing challenge found for ${today}`);
-      console.log(`🤖 AI Generation enabled: ${isGeminiEnabled()}`);
+      logger.info(`No existing challenge found for ${today}`);
+      logger.info(`AI Generation enabled: ${isGeminiEnabled()}`);
 
       // If no existing challenge and Gemini is enabled, generate new one
       if (isGeminiEnabled()) {
-        console.log("🎯 Generating new AI challenge...");
+        logger.info("Generating new AI challenge");
 
         const generationResult = await generateTodaysChallenge();
         const challenge = generationResult.challenge;
@@ -101,24 +126,30 @@ export const appRouter = router({
               validation_status: "validated",
             },
           });
-          console.log(`💾 Stored AI challenge in database`);
+          logger.info("Stored AI challenge in database", { challengeId: challenge.id });
         } catch (dbError) {
-          console.warn(
-            `! Failed to store challenge in database, but continuing:`,
-            dbError instanceof Error ? dbError.message : String(dbError),
+          logger.warn(
+            "Failed to store challenge in database, but continuing",
+            { error: dbError instanceof Error ? dbError.message : String(dbError) }
           );
           // Continue without database storage - better to return challenge than fail
         }
 
-        console.log(
-          `🎉 Generated new ${generationResult.generatedBy} challenge: ${challenge.title}`,
+        logger.info(
+          "Generated new AI challenge",
+          { 
+            generatedBy: generationResult.generatedBy, 
+            title: challenge.title,
+            difficulty: challenge.difficulty 
+          }
         );
         return challenge;
       }
 
       // Fallback to static challenge generation
-      console.log("📚 Using static challenge generation (AI disabled)");
-      const staticChallenge = getTodaysChallenge();
+      logger.info("Using static challenge generation (AI disabled)");
+      const todaysDate = new Date().toISOString().split('T')[0];
+      const staticChallenge = generateChallengeForDate(todaysDate);
 
       // Store static challenge in database for consistency
       await db.challenge.create({
@@ -137,7 +168,8 @@ export const appRouter = router({
     } catch (error) {
       console.error("Error in getTodaysChallenge:", error);
       // Ultimate fallback to static generation without database storage
-      return getTodaysChallenge();
+      const todaysDate = new Date().toISOString().split('T')[0];
+      return generateChallengeForDate(todaysDate);
     }
   }),
 
@@ -169,7 +201,8 @@ export const appRouter = router({
           if (isGeminiEnabled()) {
             generationResult = await generateTodaysChallenge();
           } else {
-            const staticChallenge = getTodaysChallenge();
+            const todaysDate = new Date().toISOString().split('T')[0];
+            const staticChallenge = generateChallengeForDate(todaysDate);
             generationResult = {
               challenge: staticChallenge,
               promptUsed: "Static regeneration",
@@ -223,18 +256,22 @@ export const appRouter = router({
     };
   }),
 
+  /**
+   * Retrieves user's attempt for a specific challenge
+   * Returns null if no attempt exists
+   */
   getUserAttempt: publicProcedure
     .input(
       z.object({
-        userId: z.string(),
-        challengeDate: z.string().optional(), // defaults to today
+        userId: schemas.userId,
+        challengeDate: schemas.challengeDate.optional(), // defaults to today
       }),
     )
     .query(async ({ input }) => {
       try {
         // Get today's challenge if no specific date provided
         const targetDate = input.challengeDate || getTodaysDate();
-        const todaysChallenge = getTodaysChallenge();
+        const todaysChallenge = generateChallengeForDate(targetDate);
 
         // Query the database for user's attempt
         const attempt = await db.challengeAttempt.findFirst({
@@ -267,20 +304,24 @@ export const appRouter = router({
       }
     }),
 
+  /**
+   * Submits a completed challenge attempt
+   * Creates or updates user's completion record with validation
+   */
   submitCompletion: publicProcedure
     .input(
       z.object({
-        userId: z.string(),
-        userEmail: z.string().email().optional(),
-        challengeId: z.string(),
-        timeMs: z.number().positive(),
-        challengeDate: z.string(),
+        userId: schemas.userId,
+        userEmail: schemas.userEmail,
+        challengeId: schemas.challengeId,
+        timeMs: schemas.timeMs,
+        challengeDate: schemas.challengeDate,
       }),
     )
     .mutation(async ({ input }) => {
       try {
         // Get today's challenge details to ensure we have complete data
-        const todaysChallenge = getTodaysChallenge();
+        const todaysChallenge = generateChallengeForDate(input.challengeDate);
 
         // Ensure user exists in database
         await ensureUser(input.userId, input.userEmail);
@@ -315,7 +356,8 @@ export const appRouter = router({
           },
         });
 
-        console.log("Challenge completed and saved to database:", {
+        logger.challenge.completed(input.challengeId, input.timeMs);
+        logger.info("Challenge completion saved to database", {
           userId: input.userId,
           challengeId: input.challengeId,
           timeMs: input.timeMs,
@@ -330,7 +372,8 @@ export const appRouter = router({
           message: "Challenge completed successfully!",
         };
       } catch (error) {
-        console.error("Failed to save challenge completion:", {
+        logger.challenge.failed(input.challengeId, error);
+        logger.error("Failed to save challenge completion", {
           userId: input.userId,
           userEmail: input.userEmail,
           challengeId: input.challengeId,

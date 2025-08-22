@@ -1,206 +1,67 @@
-import { useCallback, useState, useEffect, useRef, useMemo, lazy, Suspense } from "react";
-import { VimEditor } from "./VimEditor";
+import { lazy, Suspense } from "react";
 import { CenteredLayout } from "./CenteredLayout";
 import { Navbar } from "./Navbar";
 import { Instructions } from "./Instructions";
 import { Challenge } from "./Challenge";
 import { CompletionModal } from "./CompletionModal";
 import { useChallenge } from "@/lib/challenge-context";
+import { EditorContainer } from "@/components/EditorContainer";
+import { ChallengeDisplay } from "@/components/ChallengeDisplay";
+import { TimerDisplay } from "@/components/TimerDisplay";
+import { StatusDisplay } from "@/components/StatusDisplay";
+import { LoadingScreen } from "@/components/LoadingScreen";
+import { useTimer } from "@/hooks/useTimer";
+import { logger } from "@/lib/logger";
 
-// Lazy load conditional components for better code splitting
+/**
+ * Lazy load conditional components for better performance
+ * Code splitting ensures TomorrowScreen is only loaded when needed
+ */
 const TomorrowScreen = lazy(() => import("./TomorrowScreen").then(m => ({ default: m.TomorrowScreen })));
 
 
+/**
+ * Main game component for Vimle challenge interface
+ * Orchestrates the daily coding challenge experience with vim editors
+ */
 export default function VimleGame() {
   const { 
     todaysChallenge, 
     userAttempt, 
     isCompleted, 
     canAttempt, 
-    submitCompletion, 
     loading,
     showTomorrowScreen,
     showCompletionModal,
     setCompletionModal
   } = useChallenge();
   
-  const [resetTrigger, setResetTrigger] = useState(0);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [isTimerRunning, setIsTimerRunning] = useState(false);
-  const [leftEditorContent, setLeftEditorContent] = useState("");
-  const [rightEditorContent, setRightEditorContent] = useState("");
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const comparisonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timer = useTimer();
 
-  // Memoized normalized content to avoid recomputation
-  const normalizedLeftContent = useMemo(() => {
-    return leftEditorContent.replace(/\s/g, '');
-  }, [leftEditorContent]);
-
-  const normalizedRightContent = useMemo(() => {
-    return rightEditorContent.replace(/\s/g, '');
-  }, [rightEditorContent]);
-
-  // Use challenge content for right editor when available
-  useEffect(() => {
-    if (todaysChallenge && !rightEditorContent) {
-      setRightEditorContent(todaysChallenge.content);
+  /**
+   * Handles user's first interaction with the challenge
+   * Starts the timer when user begins working
+   */
+  const handleUserInteraction = () => {
+    if (!timer.isRunning) {
+      timer.startTimer();
+      logger.challenge.started(todaysChallenge?.id || 'unknown');
     }
-  }, [todaysChallenge, rightEditorContent]);
+  };
 
-  // Mark initialization complete once both editors have content
-  useEffect(() => {
-    if (leftEditorContent !== undefined && rightEditorContent !== undefined && !isInitialized) {
-      setIsInitialized(true);
-    }
-  }, [leftEditorContent, rightEditorContent, isInitialized]);
-
-  // Timer effect
-  useEffect(() => {
-    if (isTimerRunning) {
-      intervalRef.current = setInterval(() => {
-        if (startTime) {
-          setElapsedTime(Date.now() - startTime);
-        }
-      }, 10); // Update every 10ms for smooth display
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isTimerRunning, startTime]);
-
-  // Optimized debounced comparison function
-  const performComparison = useCallback(() => {
-    if (hasUserInteracted && isTimerRunning) {
-      console.log('Comparing:', {
-        leftLength: normalizedLeftContent.length,
-        rightLength: normalizedRightContent.length,
-        leftContent: normalizedLeftContent.slice(0, 20) + '...',
-        rightContent: normalizedRightContent.slice(0, 20) + '...',
-        match: normalizedLeftContent === normalizedRightContent
-      });
-      
-      // Early exit: quick length check before expensive comparison
-      if (normalizedLeftContent.length !== normalizedRightContent.length) {
-        console.log('Length mismatch, skipping comparison');
-        return;
-      }
-      
-      // Only do full comparison if lengths match
-      if (normalizedLeftContent && normalizedRightContent && normalizedLeftContent === normalizedRightContent) {
-        setIsTimerRunning(false);
-        const completionTime = Date.now() - (startTime || 0);
-        console.log(`Timer stopped! Completed in ${(completionTime / 1000).toFixed(2)} seconds`);
-        
-        // Submit completion to the challenge system
-        if (canAttempt && !isSubmitting) {
-          setIsSubmitting(true);
-          setSubmissionError(null);
-          
-          submitCompletion(completionTime)
-            .then(() => {
-              console.log('Challenge completion submitted successfully');
-            })
-            .catch((error) => {
-              console.error('Failed to submit completion:', error);
-              setSubmissionError(error instanceof Error ? error.message : 'Failed to save your completion. Please try again.');
-            })
-            .finally(() => {
-              setIsSubmitting(false);
-            });
-        }
-      } else {
-        console.log('Content does not match despite same length');
-      }
-    }
-  }, [hasUserInteracted, isTimerRunning, normalizedLeftContent, normalizedRightContent, startTime, canAttempt, submitCompletion, isSubmitting]);
-
-  // Debounced content comparison (300ms delay)
-  useEffect(() => {
-    console.log('Debounce Effect:', {
-      hasUserInteracted,
-      leftEditorContent: leftEditorContent ? `"${leftEditorContent.slice(0, 20)}..."` : 'empty',
-      rightEditorContent: rightEditorContent ? `"${rightEditorContent.slice(0, 20)}..."` : 'empty',
-      isTimerRunning,
-      willTrigger: hasUserInteracted && leftEditorContent && rightEditorContent && isTimerRunning
-    });
-    
-    if (hasUserInteracted && leftEditorContent && rightEditorContent && isTimerRunning) {
-      console.log('Setting debounced timeout...');
-      // Clear previous timeout
-      if (comparisonTimeoutRef.current) {
-        clearTimeout(comparisonTimeoutRef.current);
-      }
-      
-      // Set new debounced timeout
-      comparisonTimeoutRef.current = setTimeout(performComparison, 300);
-    }
-    
-    return () => {
-      if (comparisonTimeoutRef.current) {
-        clearTimeout(comparisonTimeoutRef.current);
-      }
-    };
-  }, [leftEditorContent, rightEditorContent, hasUserInteracted, isTimerRunning, performComparison]);
-
-  const handleUserInteraction = useCallback(() => {
-    if (isInitialized && !hasUserInteracted) {
-      console.log('User interaction detected - setting hasUserInteracted to true');
-      setHasUserInteracted(true);
-      
-      if (!isTimerRunning) {
-        const now = Date.now();
-        setStartTime(now);
-        setElapsedTime(0);
-        setIsTimerRunning(true);
-        console.log('Timer started from user interaction');
-      }
-    }
-  }, [isInitialized, hasUserInteracted, isTimerRunning]);
-
-  const handleMotionCapture = useCallback(
-    (motion: string) => {
-      // Handle user interaction (includes timer start)
-      handleUserInteraction();
-      console.log('Motion captured:', motion);
-    },
-    [handleUserInteraction],
-  );
-
-  // Show loading state
+  // Show loading state while fetching challenge data
   if (loading) {
-    return (
-      <>
-        <Navbar />
-        <CenteredLayout>
-          <div className="flex flex-col items-center space-y-8">
-            <div className="text-center">
-              <div className="text-lg font-semibold">Loading today's challenge...</div>
-              <div className="text-sm text-muted-foreground mt-2">Preparing your daily coding challenge</div>
-            </div>
-          </div>
-        </CenteredLayout>
-      </>
-    );
+    return <LoadingScreen />;
   }
 
-  // Show tomorrow screen if user has completed and dismissed popup
+  // Show tomorrow screen for completed challenges
   if (showTomorrowScreen && todaysChallenge && userAttempt) {
     return (
       <Suspense fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <LoadingScreen 
+          message="Loading completion screen..." 
+          description="Preparing your challenge results"
+        />
       }>
         <TomorrowScreen
           challengeTitle={todaysChallenge.title}
@@ -212,88 +73,44 @@ export default function VimleGame() {
     );
   }
 
-  // For completed challenges, always show the interface with readonly editors
-  // The popup will appear when needed
-
-  // Show active challenge interface
+  // Main challenge interface
   return (
     <>
       <Navbar />
       <CenteredLayout>
         <div className="flex flex-col items-center space-y-8">
+          {/* Challenge Header */}
           {todaysChallenge ? (
-            <div className="text-center max-w-2xl mx-auto mb-6">
-              <h2 className="text-lg font-bold text-foreground mb-2">
-                Today's Challenge
-              </h2>
-              <p className="text-foreground font-semibold">
-                {todaysChallenge.title}
-              </p>
-              <div className="mt-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {todaysChallenge.difficulty}
-                </span>
-              </div>
-            </div>
+            <ChallengeDisplay challenge={todaysChallenge} />
           ) : (
             <Challenge />
           )}
           
+          {/* Instructions */}
           <Instructions />
 
-          {/* Timer Display - only show for active attempts */}
-          {(isTimerRunning || elapsedTime > 0) && canAttempt && (
-            <div className="text-center text-lg font-mono">
-              <span className={isTimerRunning ? "text-green-500" : "text-blue-500"}>
-                {isTimerRunning ? "⏱️ " : "✅ "}{(elapsedTime / 1000).toFixed(2)}s
-              </span>
-            </div>
-          )}
+          {/* Timer Display */}
+          <TimerDisplay
+            elapsedTime={timer.elapsedTime}
+            isRunning={timer.isRunning}
+            visible={(timer.isRunning || timer.elapsedTime > 0) && canAttempt}
+          />
 
-          {/* Submission Status */}
-          {isSubmitting && (
-            <div className="text-center text-sm text-blue-600">
-              <div className="inline-flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                Saving your completion...
-              </div>
-            </div>
-          )}
+          {/* Status Display */}
+          <StatusDisplay
+            isSubmitting={false} // Handled by EditorContainer now
+            error={null} // Handled by EditorContainer now
+          />
 
-          {/* Error Display */}
-          {submissionError && (
-            <div className="text-center text-sm bg-red-50 border border-red-200 rounded-lg p-3 max-w-md">
-              <div className="text-red-800 font-medium">⚠️ Save Failed</div>
-              <div className="text-red-600 mt-1">{submissionError}</div>
-              <button 
-                onClick={() => setSubmissionError(null)}
-                className="mt-2 text-xs text-red-600 underline hover:text-red-800"
-              >
-                Dismiss
-              </button>
-            </div>
-          )}
-
-
-          {/* Main Content - Two Editors Side by Side */}
+          {/* Main Editor Container */}
           {todaysChallenge && (
-            <div className="flex gap-8 items-center justify-center">
-              <VimEditor
-                onMotionCapture={canAttempt ? handleMotionCapture : () => {}}
-                onContentChange={canAttempt ? setLeftEditorContent : () => {}}
-                onUserInteraction={canAttempt ? handleUserInteraction : undefined}
-                resetTrigger={resetTrigger}
-                readonly={!canAttempt} // readonly if completed
-                initialContent={isCompleted ? todaysChallenge.content : undefined}
-              />
-              <VimEditor
-                onMotionCapture={() => {}}
-                onContentChange={setRightEditorContent}
-                resetTrigger={resetTrigger}
-                readonly={true}
-                initialContent={todaysChallenge.content}
-              />
-            </div>
+            <EditorContainer
+              todaysChallenge={todaysChallenge}
+              canAttempt={canAttempt}
+              isCompleted={isCompleted}
+              resetTrigger={0} // TODO: Add reset functionality if needed
+              onUserInteraction={handleUserInteraction}
+            />
           )}
         </div>
       </CenteredLayout>
@@ -310,7 +127,6 @@ export default function VimleGame() {
           difficulty={todaysChallenge.difficulty}
         />
       )}
-
     </>
   );
 }

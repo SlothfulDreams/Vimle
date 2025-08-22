@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { trpc } from "@/trpc/client";
 import { useAuth } from "./auth-context";
-import type { DailyChallenge } from "./challenge-service";
+import type { DailyChallenge } from "@/types";
 import { 
   getTodaysLocalAttempt, 
   saveLocalCompletion, 

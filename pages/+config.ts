@@ -12,7 +12,7 @@ export default {
   // https://vike.dev/head-tags
   title: "Vimle - Vim Motion Trainer",
 
-  description: "Learn and practice Vim motions with Wordle-style feedback",
+  description: "Level up your Vim motions: edit the left, match the right",
   extends: vikeReact,
   prerender: true,
 } satisfies Config;
