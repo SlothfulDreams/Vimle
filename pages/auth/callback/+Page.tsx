@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { usePageContext } from "vike-react/usePageContext";
 import { navigate } from "vike/client/router";
-import { supabase } from "../../../lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export default function AuthCallback() {
   const pageContext = usePageContext();
