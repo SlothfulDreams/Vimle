@@ -4,6 +4,7 @@ import { CenteredLayout } from "./CenteredLayout";
 import { Navbar } from "./Navbar";
 import { Instructions } from "./Instructions";
 import { Challenge } from "./Challenge";
+import { CompletionModal } from "./CompletionModal";
 import { useChallenge } from "@/lib/challenge-context";
 
 // Lazy load conditional components for better code splitting
@@ -18,7 +19,9 @@ export default function VimleGame() {
     canAttempt, 
     submitCompletion, 
     loading,
-    showTomorrowScreen
+    showTomorrowScreen,
+    showCompletionModal,
+    setCompletionModal
   } = useChallenge();
   
   const [resetTrigger, setResetTrigger] = useState(0);
@@ -295,6 +298,18 @@ export default function VimleGame() {
         </div>
       </CenteredLayout>
 
+      {/* Completion Modal */}
+      {todaysChallenge && userAttempt && (
+        <CompletionModal
+          open={showCompletionModal}
+          onOpenChange={setCompletionModal}
+          challengeTitle={todaysChallenge.title}
+          challengeId={todaysChallenge.id}
+          userTimeMs={userAttempt.timeMs || 0}
+          completedAt={userAttempt.completedAt || new Date()}
+          difficulty={todaysChallenge.difficulty}
+        />
+      )}
 
     </>
   );

@@ -31,11 +31,13 @@ interface ChallengeContextType {
   
   // UI states
   showTomorrowScreen: boolean;
+  showCompletionModal: boolean;
   
   // Actions
   submitCompletion: (timeMs: number) => Promise<void>;
   refreshChallenge: () => Promise<void>;
   setTomorrowScreen: (show: boolean) => void;
+  setCompletionModal: (show: boolean) => void;
 }
 
 const ChallengeContext = createContext<ChallengeContextType | undefined>(undefined);
@@ -49,6 +51,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   
   // UI state management
   const [showTomorrowScreen, setShowTomorrowScreen] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // tRPC queries
   const todaysChallengeQuery = trpc.getTodaysChallenge.useQuery(undefined, {
@@ -225,8 +228,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       
       setUserAttempt(newAttempt);
       
-      // Show tomorrow screen immediately after completion
-      setShowTomorrowScreen(true);
+      // Show completion modal immediately after completion
+      setShowCompletionModal(true);
 
     } catch (error) {
       console.error('Failed to submit completion:', error);
@@ -249,6 +252,11 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     setShowTomorrowScreen(show);
   }, []);
 
+  // Set completion modal visibility
+  const setCompletionModal = useCallback((show: boolean) => {
+    setShowCompletionModal(show);
+  }, []);
+
   const value: ChallengeContextType = {
     todaysChallenge,
     userAttempt,
@@ -256,9 +264,11 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     canAttempt,
     loading,
     showTomorrowScreen,
+    showCompletionModal,
     submitCompletion,
     refreshChallenge,
-    setTomorrowScreen
+    setTomorrowScreen,
+    setCompletionModal
   };
 
   return (

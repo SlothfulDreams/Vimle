@@ -162,6 +162,52 @@ export const appRouter = router({
       }
     }),
 
+  getGlobalChallengeStats: publicProcedure
+    .input(z.object({
+      challengeId: z.string()
+    }))
+    .query(async ({ input }) => {
+      try {
+        // Get all completed attempts for this specific challenge
+        const attempts = await db.challengeAttempt.findMany({
+          where: {
+            challenge_id: input.challengeId,
+            completed_at: { not: null },
+            time_ms: { not: null },
+          },
+        });
+
+        const totalCompletions = attempts.length;
+        
+        if (totalCompletions === 0) {
+          return {
+            averageTime: 0,
+            totalCompletions: 0,
+            fastestTime: null
+          };
+        }
+
+        // Calculate global statistics for this challenge
+        const totalTime = attempts.reduce((sum: number, attempt: any) => sum + (attempt.time_ms || 0), 0);
+        const averageTime = Math.round(totalTime / totalCompletions);
+        const fastestTime = Math.min(...attempts.map((attempt: any) => attempt.time_ms || Infinity));
+
+        return {
+          averageTime,
+          totalCompletions,
+          fastestTime: fastestTime === Infinity ? null : fastestTime,
+        };
+      } catch (error) {
+        console.error('Failed to fetch global challenge stats:', error);
+        // Return empty stats on error
+        return {
+          averageTime: 0,
+          totalCompletions: 0,
+          fastestTime: null
+        };
+      }
+    }),
+
   getChallengeStats: publicProcedure
     .input(z.object({
       userId: z.string()
