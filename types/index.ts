@@ -11,6 +11,7 @@ export type DifficultyLevel = "easy" | "medium" | "hard";
 export interface DailyChallenge {
   id: string;
   date: string;
+  startingContent?: string;
   content: string;
   title: string;
   difficulty: DifficultyLevel;

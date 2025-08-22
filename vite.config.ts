@@ -9,7 +9,7 @@ export default defineConfig({
   define: {
     global: "globalThis",
   },
-  
+
   // Enable sourcemaps in development for better debugging
   css: {
     devSourcemap: true,
@@ -40,7 +40,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     vercel(),
-    
+
     // Custom plugin to suppress known Tailwind sourcemap warnings
     {
       name: "suppress-tailwind-sourcemap-warnings",
@@ -55,7 +55,7 @@ export default defineConfig({
           ) {
             return;
           }
-          
+
           // Suppress CSS sourcemap warnings
           if (
             warning.code === "SOURCEMAP_BROKEN" &&
@@ -63,7 +63,7 @@ export default defineConfig({
           ) {
             return;
           }
-          
+
           // Call original onwarn if it exists, otherwise use default warn
           if (originalOnWarn) {
             originalOnWarn(warning, warn);
@@ -82,33 +82,39 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           // Split vendor dependencies
-          if (id.includes('react') || id.includes('react-dom')) {
-            return 'vendor-react';
+          if (id.includes("react") || id.includes("react-dom")) {
+            return "vendor-react";
           }
-          if (id.includes('@uiw/react-codemirror') || 
-              id.includes('@replit/codemirror-vim') ||
-              id.includes('@codemirror/lang-javascript') ||
-              id.includes('@codemirror/theme-one-dark') ||
-              id.includes('@codemirror/view')) {
-            return 'vendor-codemirror';
+          if (
+            id.includes("@uiw/react-codemirror") ||
+            id.includes("@replit/codemirror-vim") ||
+            id.includes("@codemirror/lang-javascript") ||
+            id.includes("@codemirror/theme-one-dark") ||
+            id.includes("@codemirror/view")
+          ) {
+            return "vendor-codemirror";
           }
-          if (id.includes('@radix-ui/react-dialog') ||
-              id.includes('@radix-ui/react-dropdown-menu') ||
-              id.includes('@radix-ui/react-avatar') ||
-              id.includes('@radix-ui/react-progress') ||
-              id.includes('@radix-ui/react-separator')) {
-            return 'vendor-ui';
+          if (
+            id.includes("@radix-ui/react-dialog") ||
+            id.includes("@radix-ui/react-dropdown-menu") ||
+            id.includes("@radix-ui/react-avatar") ||
+            id.includes("@radix-ui/react-progress") ||
+            id.includes("@radix-ui/react-separator")
+          ) {
+            return "vendor-ui";
           }
-          if (id.includes('@trpc/client') ||
-              id.includes('@trpc/react-query') ||
-              id.includes('@tanstack/react-query')) {
-            return 'vendor-trpc';
+          if (
+            id.includes("@trpc/client") ||
+            id.includes("@trpc/react-query") ||
+            id.includes("@tanstack/react-query")
+          ) {
+            return "vendor-trpc";
           }
           // Default behavior for other modules
           return undefined;
-        }
-      }
-    }
+        },
+      },
+    },
   },
 
   optimizeDeps: {
@@ -120,12 +126,24 @@ export default defineConfig({
   },
 
   // Vercel configuration - let Vike handle server entry generation
-  vercel: {},
+  vercel: {
+    additionalEndpoints: [
+      {
+        // entry file to the server. Default export must be a node server or a function
+        source: "hono-entry.ts",
+        // replaces default Vike target
+        destination: "ssr_",
+        // already added by default Vike route
+        route: false,
+      },
+    ],
+  },
 
   resolve: {
     alias: {
       "@": new URL("./", import.meta.url).pathname,
-      ".prisma/client": new URL("./lib/generated/prisma", import.meta.url).pathname,
+      ".prisma/client": new URL("./lib/generated/prisma", import.meta.url)
+        .pathname,
     },
   },
 });
