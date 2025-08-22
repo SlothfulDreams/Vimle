@@ -32,12 +32,15 @@ model User {
 }
 
 model Challenge {
-  id         String   @id @default(cuid())
-  date       DateTime @unique @db.Date
-  content    String
-  title      String
-  difficulty String   @default("medium")
-  created_at DateTime @default(now())
+  id                String   @id @default(cuid())
+  date              DateTime @unique @db.Date
+  content           String
+  title             String
+  difficulty        String   @default("medium")
+  prompt_used       String?  // Track AI prompt used for generation
+  generated_by      String   @default("static") // "static" | "gemini"
+  validation_status String   @default("validated") // "pending" | "validated" | "failed"
+  created_at        DateTime @default(now())
 
   attempts ChallengeAttempt[]
 
