@@ -3,7 +3,7 @@
  * Environment variables and configuration for AI services
  */
 
-import { logger } from "@/lib/logger";
+import { logger } from "../../logger.js";
 
 /**
  * Get Gemini AI specific configuration
