@@ -14,5 +14,5 @@ export default {
 
   description: "Level up your Vim motions: edit the left, match the right",
   extends: vikeReact,
-  prerender: true,
+  prerender: false,
 } satisfies Config;

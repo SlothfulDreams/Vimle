@@ -1,4 +1,4 @@
-// import vercel from "vite-plugin-vercel";
+import vercel from "vite-plugin-vercel";
 
 import devServer from "@hono/vite-dev-server";
 import tailwindcss from "@tailwindcss/vite";
@@ -26,7 +26,7 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    // vercel(),
+    vercel(),
   ],
 
   build: {
