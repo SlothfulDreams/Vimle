@@ -26,7 +26,7 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    // vercel(),
+    vercel(),
   ],
 
   build: {
@@ -35,7 +35,7 @@ export default defineConfig({
       external: ["@prisma/client", ".prisma/client"],
     },
   },
-  
+
   ssr: {
     external: ["@prisma/client", ".prisma/client", ".prisma/client/default"],
     noExternal: [],
