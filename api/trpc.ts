@@ -1,6 +1,6 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { appRouter } from "../trpc/server";
+import { appRouter } from "../trpc/server.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   console.log("tRPC request:", req.method, req.url);
