@@ -10,7 +10,7 @@ if (typeof window !== "undefined") {
   throw new Error("Database client should only be imported on the server side");
 }
 
-import { PrismaClient } from "../lib/generated/prisma/client";
+import { PrismaClient } from "../lib/generated/prisma/client.js";
 
 // Global variable to store the Prisma client instance
 declare global {
