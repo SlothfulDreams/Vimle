@@ -1,22 +1,17 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { appRouter } from "../trpc/server";
 
-// We use JSDoc instead of TypeScript because Vercel seems buggy with /api/**/*.ts files
-
-/**
- * @param {import('@vercel/node').VercelRequest} req
- * @param {import('@vercel/node').VercelResponse} res
- */
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
   console.log("tRPC request:", req.method, req.url);
 
   try {
     // Convert Vercel request to standard Request object for tRPC
-    const url = new URL(req.url || '', `http://${req.headers.host || 'localhost'}`);
+    const url = new URL(req.url || '', `https://${req.headers.host || 'localhost'}`);
     
     const request = new Request(url, {
-      method: req.method,
-      headers: req.headers,
+      method: req.method || 'GET',
+      headers: req.headers as HeadersInit,
       body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
     });
 
