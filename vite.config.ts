@@ -26,11 +26,19 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    vercel(),
+    // vercel(),
   ],
 
   build: {
     target: "es2022",
+    rollupOptions: {
+      external: ["@prisma/client", ".prisma/client"],
+    },
+  },
+  
+  ssr: {
+    external: ["@prisma/client", ".prisma/client", ".prisma/client/default"],
+    noExternal: [],
   },
 
   vercel: {
