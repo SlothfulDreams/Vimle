@@ -68,13 +68,3 @@ export function isDevelopment(): boolean {
 export function isProduction(): boolean {
   return env.NODE_ENV === "production";
 }
-
-/**
- * @deprecated Use isGeminiEnabled from @/lib/ai-generation/config instead
- */
-export const isGeminiEnabled = (): boolean => {
-  logger.warn(
-    "isGeminiEnabled from lib/env is deprecated. Use @/lib/ai-generation/config instead",
-  );
-  return Boolean(process.env.GEMINI_API_KEY);
-};

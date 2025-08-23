@@ -4,10 +4,14 @@
  * Handles service selection, retry logic, and fallback mechanisms
  */
 
-import { getTodaysChallenge } from "../challenge/index.js";
+import { getChallengeFromPool } from "../challenge/static-pool.js";
 import { logger } from "../logger.js";
 import type { DailyChallenge } from "../../types/index.js";
-import { getAIConfig, getGeminiConfig, isGeminiEnabled } from "./config/index.js";
+import {
+  getAIConfig,
+  getGeminiConfig,
+  isGeminiEnabled,
+} from "./config/index.js";
 import {
   type ChallengeGenerationOptions,
   type GeminiChallengeService,
@@ -214,16 +218,16 @@ function generateStaticFallback(
   date: string,
   difficulty: "easy" | "medium" | "hard",
 ): GenerationResult {
-  // Use the existing challenge service
+  // Generate deterministic index based on date
+  const challengeIndex = hashString(date);
+  const staticChallenge = getChallengeFromPool(difficulty, challengeIndex);
 
-  // Generate using the existing deterministic method
-  const staticChallenge = getTodaysChallenge();
-
-  // Override the difficulty if different
   const challenge: DailyChallenge = {
-    ...staticChallenge,
-    difficulty,
     id: `${date}-static-${difficulty}`,
+    date,
+    content: staticChallenge.content,
+    title: staticChallenge.title,
+    difficulty,
   };
 
   return {

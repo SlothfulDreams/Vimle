@@ -4,7 +4,7 @@ import { usePageContext } from "vike-react/usePageContext";
 import { supabase } from "@/lib/supabase";
 
 export default function AuthCallback() {
-  const pageContext = usePageContext();
+  const _pageContext = usePageContext();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -12,7 +12,7 @@ export default function AuthCallback() {
       if (!supabase || typeof window === "undefined") {
         console.error("Supabase client not available");
         navigate(
-          "/?error=" + encodeURIComponent("Authentication service unavailable"),
+          `/?error=${encodeURIComponent("Authentication service unavailable")}`,
         );
         return;
       }
@@ -24,7 +24,7 @@ export default function AuthCallback() {
 
       if (error) {
         console.error("Auth error:", error);
-        navigate("/?error=" + encodeURIComponent(error));
+        navigate(`/?error=${encodeURIComponent(error)}`);
         return;
       }
 
@@ -34,7 +34,7 @@ export default function AuthCallback() {
 
         if (sessionError) {
           console.error("Session error:", sessionError);
-          navigate("/?error=" + encodeURIComponent(sessionError.message));
+          navigate(`/?error=${encodeURIComponent(sessionError.message)}`);
           return;
         }
       }

@@ -37,6 +37,7 @@ export function StatusDisplay({
         <div className="text-red-600 mt-1">{error}</div>
         {onClearError && (
           <button
+            type="button"
             onClick={onClearError}
             className="mt-2 text-xs text-red-600 underline hover:text-red-800 transition-colors"
           >

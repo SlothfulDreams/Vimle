@@ -1,4 +1,3 @@
-
 import devServer from "@hono/vite-dev-server";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -27,28 +26,15 @@ export default defineConfig({
     tailwindcss(),
   ],
 
-build: {
-  rollupOptions: {
-    external: [
-      "@prisma/client",
-      ".prisma/client",
-      "../lib/generated/prisma",
-      "../lib/generated/prisma/client",
-      "../lib/generated/prisma/internal"
-    ],
+  build: {
+    rollupOptions: {
+      external: ["@prisma/client", ".prisma/client"],
+    },
   },
-},
-ssr: {
-  external: [
-    "@prisma/client",
-    ".prisma/client",
-    "../lib/generated/prisma",
-    "../lib/generated/prisma/client",
-    "../lib/generated/prisma/internal"
-  ],
-  noExternal: [],
-},
-
+  ssr: {
+    external: ["@prisma/client", ".prisma/client"],
+    noExternal: [],
+  },
 
   resolve: {
     alias: {

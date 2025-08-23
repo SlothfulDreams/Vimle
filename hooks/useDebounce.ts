@@ -30,7 +30,7 @@ export function useDebounce(
         clearTimeout(timeoutRef.current);
       }
     };
-  }, dependencies);
+  }, [callback, delay, ...dependencies]);
 
   // Cleanup on unmount
   useEffect(() => {

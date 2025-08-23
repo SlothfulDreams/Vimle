@@ -145,3 +145,4 @@ cdk.out
 *.local.*
 
 .playwright-mcp
+.vercel

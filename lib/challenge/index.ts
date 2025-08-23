@@ -4,13 +4,10 @@
  */
 
 // Main service
-// Legacy compatibility functions
 export {
   ChallengeService,
   challengeService,
-  generateChallengeForDate,
   getDifficultyForDate,
-  getTodaysChallenge,
   getTodaysDate,
 } from "./service.js";
 export type { StaticChallenge } from "./static-pool.js";

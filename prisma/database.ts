@@ -18,7 +18,7 @@ declare global {
 }
 
 // Create singleton Prisma client instance with unique process identification
-const processId = process.pid || Math.random().toString(36).substring(7);
+const _processId = process.pid || Math.random().toString(36).substring(7);
 
 export const db =
   globalThis.__prisma ||

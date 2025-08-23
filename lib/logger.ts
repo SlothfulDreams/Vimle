@@ -90,7 +90,7 @@ class Logger {
    * Send logs to external service in production
    * Currently a placeholder for future implementation
    */
-  private sendToLogService(entry: LogEntry): void {
+  private sendToLogService(_entry: LogEntry): void {
     // TODO: Implement external logging service integration
     // Example: send to Sentry, LogRocket, or custom analytics
   }

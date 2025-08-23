@@ -1,6 +1,9 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { generateTodaysChallenge, type GenerationResult } from "../lib/ai-generation/index.js";
+import {
+  generateTodaysChallenge,
+  type GenerationResult,
+} from "../lib/ai-generation/index.js";
 import { isGeminiEnabled } from "../lib/ai-generation/config/index.js";
 import { challengeService, getTodaysDate } from "../lib/challenge/index.js";
 import { logger } from "../lib/logger.js";

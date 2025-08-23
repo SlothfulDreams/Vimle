@@ -152,8 +152,8 @@ export function useCompletionHandler(
       leftLength: normalizedContent.left.length,
       rightLength: normalizedContent.right.length,
       contentPreview: {
-        left: normalizedContent.left.slice(0, 20) + "...",
-        right: normalizedContent.right.slice(0, 20) + "...",
+        left: `${normalizedContent.left.slice(0, 20)}...`,
+        right: `${normalizedContent.right.slice(0, 20)}...`,
       },
     },
   };

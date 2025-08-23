@@ -349,38 +349,7 @@ function hashString(str: string): number {
   return Math.abs(hash);
 }
 
-/**
- * Legacy function for backward compatibility
- * @deprecated Use ChallengeService.generateTodaysChallenge instead
- */
-export function getTodaysChallenge(): DailyChallenge {
-  const service = new ChallengeService();
-  // This is a simplified sync version for backward compatibility
-  // In practice, should be replaced with async calls
-  const result = service.generateTodaysChallenge();
-  if (result instanceof Promise) {
-    throw new Error("Legacy function cannot handle async operations");
-  }
-  return (result as any).challenge; // Type assertion for compatibility
-}
 
-/**
- * Legacy function for backward compatibility
- * @deprecated Use ChallengeService.generateTodaysChallenge instead
- */
-export function generateChallengeForDate(date: string): DailyChallenge {
-  const difficulty = getDifficultyForDate(date);
-  const challengeIndex = hashString(date);
-  const staticChallenge = getChallengeFromPool(difficulty, challengeIndex);
-
-  return {
-    id: `${date}-static-${difficulty}`,
-    date,
-    content: staticChallenge.content,
-    title: staticChallenge.title,
-    difficulty,
-  };
-}
 
 // Export default service instance
 export const challengeService = new ChallengeService();
