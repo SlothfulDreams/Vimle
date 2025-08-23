@@ -28,23 +28,23 @@ export default defineConfig({
   ],
 
 build: {
-  target: "es2022",
   rollupOptions: {
     external: [
       "@prisma/client",
       ".prisma/client",
       "../lib/generated/prisma",
       "../lib/generated/prisma/client",
+      "../lib/generated/prisma/internal"
     ],
   },
 },
-
 ssr: {
   external: [
     "@prisma/client",
     ".prisma/client",
     "../lib/generated/prisma",
     "../lib/generated/prisma/client",
+    "../lib/generated/prisma/internal"
   ],
   noExternal: [],
 },
