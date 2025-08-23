@@ -4,7 +4,7 @@
  * AI-specific config has been moved to /ai-generation/config/
  */
 
-import { logger } from "./logger";
+import { logger } from "./logger.js";
 
 /**
  * General application environment configuration

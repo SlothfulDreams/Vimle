@@ -1,8 +1,8 @@
 import type { Session, User } from "@supabase/supabase-js";
 import type React from "react";
 import { createContext, useContext, useEffect, useState } from "react";
-import { logger } from "./logger";
-import { supabase } from "./supabase";
+import { logger } from "./logger.js";
+import { supabase } from "./supabase.js";
 
 /**
  * Authentication context interface

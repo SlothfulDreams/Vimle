@@ -8,13 +8,13 @@ import {
 } from "react";
 import { trpc } from "@/trpc/client";
 import type { DailyChallenge } from "@/types";
-import { useAuth } from "./auth-context";
+import { useAuth } from "./auth-context.js";
 import {
   clearLocalData,
   getAllLocalAttempts,
   getTodaysLocalAttempt,
   saveLocalCompletion,
-} from "./local-storage";
+} from "./local-storage.js";
 
 interface ChallengeAttempt {
   id: string;

@@ -3,7 +3,7 @@
  * Clean exports for all Gemini-related functionality
  */
 
-export type { GeminiErrorCode } from "./errors";
+export type { GeminiErrorCode } from "./errors.js";
 // Error handling
 export {
   createGeminiError,
@@ -13,16 +13,16 @@ export {
   GeminiValidationError,
   getRetryDelay,
   isRetryableError,
-} from "./errors";
-export type { DifficultyLevel, PromptOptions } from "./prompts";
+} from "./errors.js";
+export type { DifficultyLevel, PromptOptions } from "./prompts.js";
 // Prompt utilities (for advanced usage)
 export {
   generateCustomPrompt,
   getPromptConfig,
   PROMPT_TEMPLATES,
-} from "./prompts";
+} from "./prompts.js";
 // Main service class
-export { GeminiChallengeService } from "./service";
+export { GeminiChallengeService } from "./service.js";
 // Types and interfaces
 export type {
   ChallengeGenerationOptions,
@@ -34,15 +34,15 @@ export type {
   HealthCheck,
   ServiceHealth,
   ValidationResult,
-} from "./types";
+} from "./types.js";
 export {
   DEFAULT_GEMINI_CONFIG,
   geminiChallengeResponseSchema,
-} from "./types";
+} from "./types.js";
 // Validation functions
 export {
   comprehensiveValidation,
   validateGeneratedCode,
   validateOrThrow,
   validateVimPracticeContent,
-} from "./validator";
+} from "./validator.js";

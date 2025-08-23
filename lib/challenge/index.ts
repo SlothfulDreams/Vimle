@@ -12,8 +12,8 @@ export {
   getDifficultyForDate,
   getTodaysChallenge,
   getTodaysDate,
-} from "./service";
-export type { StaticChallenge } from "./static-pool";
+} from "./service.js";
+export type { StaticChallenge } from "./static-pool.js";
 // Static pool utilities
 export {
   getChallengeFromPool,
@@ -21,7 +21,7 @@ export {
   getRandomChallengeFromPool,
   STATIC_CHALLENGE_POOL,
   validateChallengePool,
-} from "./static-pool";
+} from "./static-pool.js";
 
 // Types
 export type {
@@ -34,4 +34,4 @@ export type {
   ChallengeStats,
   ChallengeValidationResult,
   DailyChallenge,
-} from "./types";
+} from "./types.js";

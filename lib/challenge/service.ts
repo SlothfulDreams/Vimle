@@ -7,21 +7,21 @@
 import {
   generateTodaysChallenge as generateAIChallenge,
   isAIEnabled,
-} from "@/lib/ai-generation";
-import { logger } from "@/lib/logger";
-import type { DailyChallenge } from "@/types";
+} from "../ai-generation/index.js";
+import { logger } from "../logger.js";
+import type { DailyChallenge } from "../../types/index.js";
 import {
   getChallengeFromPool,
   getPoolSize,
   validateChallengePool,
-} from "./static-pool";
+} from "./static-pool.js";
 import type {
   ChallengeGenerationOptions,
   ChallengeGenerationResult,
   ChallengeMetadata,
   ChallengeServiceConfig,
   ChallengeValidationResult,
-} from "./types";
+} from "./types.js";
 
 /**
  * Default service configuration

@@ -4,16 +4,16 @@
  * Handles service selection, retry logic, and fallback mechanisms
  */
 
-import { getTodaysChallenge } from "@/lib/challenge";
-import { logger } from "@/lib/logger";
-import type { DailyChallenge } from "@/types";
-import { getAIConfig, getGeminiConfig, isGeminiEnabled } from "./config";
+import { getTodaysChallenge } from "../challenge/index.js";
+import { logger } from "../logger.js";
+import type { DailyChallenge } from "../../types/index.js";
+import { getAIConfig, getGeminiConfig, isGeminiEnabled } from "./config/index.js";
 import {
   type ChallengeGenerationOptions,
   type GeminiChallengeService,
   getRetryDelay,
   isRetryableError,
-} from "./gemini";
+} from "./gemini/index.js";
 
 /**
  * Options for challenge generation

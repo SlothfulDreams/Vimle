@@ -7,9 +7,9 @@ import {
   type GenerativeModel,
   GoogleGenerativeAI,
 } from "@google/generative-ai";
-import { logger } from "@/lib/logger";
-import { createGeminiError, GeminiGenerationError } from "./errors";
-import { generateCustomPrompt, PROMPT_TEMPLATES } from "./prompts";
+import { logger } from "../../logger.js";
+import { createGeminiError, GeminiGenerationError } from "./errors.js";
+import { generateCustomPrompt, PROMPT_TEMPLATES } from "./prompts.js";
 import {
   type ChallengeGenerationOptions,
   type ChallengeGenerationResult,
@@ -19,8 +19,8 @@ import {
   geminiChallengeResponseSchema,
   type HealthCheck,
   type ServiceHealth,
-} from "./types";
-import { validateOrThrow } from "./validator";
+} from "./types.js";
+import { validateOrThrow } from "./validator.js";
 
 /**
  * Main service class for Gemini AI challenge generation

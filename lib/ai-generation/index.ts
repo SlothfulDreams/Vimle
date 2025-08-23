@@ -4,12 +4,12 @@
  */
 
 // Configuration
-export { getAIServiceConfig, isAIEnabled, isGeminiEnabled } from "./config";
+export { getAIServiceConfig, isAIEnabled, isGeminiEnabled } from "./config/index.js";
 // Gemini-specific exports
-export * from "./gemini";
-export type { GenerationOptions, GenerationResult } from "./generator";
+export * from "./gemini/index.js";
+export type { GenerationOptions, GenerationResult } from "./generator.js";
 // Main orchestrator
-export { generateTodaysChallenge, getAIServicesHealth } from "./generator";
+export { generateTodaysChallenge, getAIServicesHealth } from "./generator.js";
 // Shared types
 export type {
   AIService,
@@ -22,4 +22,4 @@ export type {
   GenerationResultWithMetadata,
   ProgrammingLanguage,
   ServiceHealthStatus,
-} from "./types";
+} from "./types.js";
