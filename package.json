@@ -1,13 +1,14 @@
 {
   "scripts": {
     "dev": "vike dev",
-    "build": "prisma generate && vike build",
+    "build": "vike build",
     "preview": "cross-env NODE_ENV=development tsx ./hono-entry.node.ts",
     "lint": "biome lint --write .",
     "format": "biome format --write .",
     "prisma:studio": "prisma studio",
     "prisma:generate": "prisma generate",
-    "shadcn": "npx shadcn@latest"
+    "shadcn": "npx shadcn@latest",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",
@@ -64,3 +65,4 @@
   },
   "type": "module"
 }
+
