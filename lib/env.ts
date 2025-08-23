@@ -12,15 +12,17 @@ import { logger } from "./logger";
 export const env = {
   // Database
   DATABASE_URL: process.env.DATABASE_URL,
-  
+
   // Supabase
-  SUPABASE_URL: process.env.VITE_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
-  SUPABASE_ANON_KEY: process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY,
-  
+  SUPABASE_URL:
+    process.env.VITE_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL,
+  SUPABASE_ANON_KEY:
+    process.env.VITE_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY,
+
   // Application
   NODE_ENV: process.env.NODE_ENV || "development",
   PORT: parseInt(process.env.PORT || "3000", 10),
-  
+
   // Feature flags
   ENABLE_ANALYTICS: process.env.ENABLE_ANALYTICS === "true",
   ENABLE_DEBUG_LOGGING: process.env.ENABLE_DEBUG_LOGGING === "true",
@@ -31,11 +33,11 @@ export const env = {
  */
 if (typeof window === "undefined") {
   const missingVars: string[] = [];
-  
+
   if (!env.SUPABASE_URL) {
     missingVars.push("SUPABASE_URL or VITE_PUBLIC_SUPABASE_URL");
   }
-  
+
   if (!env.SUPABASE_ANON_KEY) {
     missingVars.push("SUPABASE_ANON_KEY or VITE_PUBLIC_SUPABASE_ANON_KEY");
   }
@@ -71,7 +73,8 @@ export function isProduction(): boolean {
  * @deprecated Use isGeminiEnabled from @/lib/ai-generation/config instead
  */
 export const isGeminiEnabled = (): boolean => {
-  logger.warn("isGeminiEnabled from lib/env is deprecated. Use @/lib/ai-generation/config instead");
+  logger.warn(
+    "isGeminiEnabled from lib/env is deprecated. Use @/lib/ai-generation/config instead",
+  );
   return Boolean(process.env.GEMINI_API_KEY);
 };
-

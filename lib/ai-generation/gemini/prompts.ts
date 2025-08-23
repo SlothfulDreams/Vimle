@@ -29,13 +29,19 @@ const PROMPT_CONFIGS: Record<DifficultyLevel, PromptTemplate> = {
       "No complex algorithms or data structures",
     ],
     codeLength: "3-5 lines",
-    concepts: ["variables", "simple functions", "basic loops", "string editing", "variable renaming"],
+    concepts: [
+      "variables",
+      "simple functions",
+      "basic loops",
+      "string editing",
+      "variable renaming",
+    ],
     jsonFormat: "exact JSON format required",
   },
-  
+
   medium: {
     requirements: [
-      "6-10 lines of JavaScript/TypeScript code", 
+      "6-10 lines of JavaScript/TypeScript code",
       "Intermediate concepts (objects, arrays, conditionals, loops)",
       "Create starting code with 2-4 moderate differences from target",
       "Differences should be: function parameters, array/object properties, conditional operators, method names",
@@ -43,10 +49,18 @@ const PROMPT_CONFIGS: Record<DifficultyLevel, PromptTemplate> = {
       "May include simple algorithms or data manipulation",
     ],
     codeLength: "6-10 lines",
-    concepts: ["objects", "arrays", "conditionals", "loops", "simple algorithms", "parameter editing", "property changes"],
+    concepts: [
+      "objects",
+      "arrays",
+      "conditionals",
+      "loops",
+      "simple algorithms",
+      "parameter editing",
+      "property changes",
+    ],
     jsonFormat: "exact JSON format required",
   },
-  
+
   hard: {
     requirements: [
       "8-15 lines of JavaScript/TypeScript code",
@@ -57,7 +71,15 @@ const PROMPT_CONFIGS: Record<DifficultyLevel, PromptTemplate> = {
       "May include algorithms, design patterns, or complex functions",
     ],
     codeLength: "8-15 lines",
-    concepts: ["classes", "recursion", "complex data structures", "algorithms", "design patterns", "method refactoring", "logic changes"],
+    concepts: [
+      "classes",
+      "recursion",
+      "complex data structures",
+      "algorithms",
+      "design patterns",
+      "method refactoring",
+      "logic changes",
+    ],
     jsonFormat: "exact JSON format required",
   },
 };
@@ -77,15 +99,19 @@ const JSON_RESPONSE_FORMAT = `{
  */
 function createPrompt(difficulty: DifficultyLevel): string {
   const config = PROMPT_CONFIGS[difficulty];
-  const difficultyText = difficulty === "easy" ? "simple" : 
-                        difficulty === "medium" ? "intermediate" : "advanced";
-  
+  const difficultyText =
+    difficulty === "easy"
+      ? "simple"
+      : difficulty === "medium"
+        ? "intermediate"
+        : "advanced";
+
   return `Generate a ${difficultyText} Vim editing practice challenge${difficulty === "easy" ? " for beginners" : ""}:
 
 This should be an EDITING challenge where users start with incomplete/incorrect code and need to edit it to match the target.
 
 Requirements:
-${config.requirements.map(req => `- ${req}`).join('\n')}
+${config.requirements.map((req) => `- ${req}`).join("\n")}
 
 IMPORTANT EDITING CHALLENGE RULES:
 - startingContent should be a realistic "before" version with intentional differences
@@ -133,32 +159,32 @@ export interface PromptOptions {
  * Useful for A/B testing or specialized challenge generation
  */
 export function generateCustomPrompt(
-  difficulty: DifficultyLevel, 
-  options: PromptOptions = {}
+  difficulty: DifficultyLevel,
+  options: PromptOptions = {},
 ): string {
   let basePrompt = PROMPT_TEMPLATES[difficulty];
-  
+
   if (options.language) {
     basePrompt = basePrompt.replace(
-      "JavaScript/TypeScript", 
-      options.language === "javascript" ? "JavaScript" : "TypeScript"
+      "JavaScript/TypeScript",
+      options.language === "javascript" ? "JavaScript" : "TypeScript",
     );
   }
-  
+
   if (options.context) {
     basePrompt = `${options.context}\n\n${basePrompt}`;
   }
-  
+
   if (options.customRequirements?.length) {
     const additionalReqs = options.customRequirements
-      .map(req => `- ${req}`)
-      .join('\n');
+      .map((req) => `- ${req}`)
+      .join("\n");
     basePrompt = basePrompt.replace(
-      'Return ONLY a JSON response',
-      `${additionalReqs}\n\nReturn ONLY a JSON response`
+      "Return ONLY a JSON response",
+      `${additionalReqs}\n\nReturn ONLY a JSON response`,
     );
   }
-  
+
   return basePrompt;
 }
 

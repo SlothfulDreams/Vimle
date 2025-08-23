@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from "react";
-import { VimEditor } from "@/pages/index/VimEditor";
-import { useTimer } from "@/hooks/useTimer";
+import { useCallback, useEffect, useState } from "react";
 import { useCompletionHandler } from "@/hooks/useCompletionHandler";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useTimer } from "@/hooks/useTimer";
+import { VimEditor } from "@/pages/index/VimEditor";
 import type { DailyChallenge, VimMotion } from "@/types";
 
 /**
@@ -62,7 +62,11 @@ export function EditorContainer({
    * Mark initialization complete when both editors have content
    */
   useEffect(() => {
-    if (leftEditorContent !== undefined && rightEditorContent !== undefined && !isInitialized) {
+    if (
+      leftEditorContent !== undefined &&
+      rightEditorContent !== undefined &&
+      !isInitialized
+    ) {
       setIsInitialized(true);
     }
   }, [leftEditorContent, rightEditorContent, isInitialized]);
@@ -74,7 +78,7 @@ export function EditorContainer({
     if (isInitialized && !hasUserInteracted) {
       setHasUserInteracted(true);
       onUserInteraction?.();
-      
+
       // Start timer on first interaction
       if (!timer.isRunning) {
         timer.startTimer();
@@ -85,14 +89,17 @@ export function EditorContainer({
   /**
    * Handle vim motion capture from editor
    */
-  const handleMotionCapture = useCallback((motion: VimMotion) => {
-    handleUserInteraction();
-    
-    // Could add motion analytics here in the future
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('Motion captured:', motion);
-    }
-  }, [handleUserInteraction]);
+  const handleMotionCapture = useCallback(
+    (motion: VimMotion) => {
+      handleUserInteraction();
+
+      // Could add motion analytics here in the future
+      if (process.env.NODE_ENV === "development") {
+        console.debug("Motion captured:", motion);
+      }
+    },
+    [handleUserInteraction],
+  );
 
   /**
    * Debounced completion check to avoid excessive comparisons
@@ -124,9 +131,10 @@ export function EditorContainer({
         onUserInteraction={canAttempt ? handleUserInteraction : undefined}
         resetTrigger={resetTrigger}
         readonly={!canAttempt}
-        initialContent={isCompleted 
-          ? todaysChallenge.content 
-          : (todaysChallenge.startingContent || undefined)
+        initialContent={
+          isCompleted
+            ? todaysChallenge.content
+            : todaysChallenge.startingContent || undefined
         }
       />
 

@@ -1,5 +1,5 @@
-import { Navbar } from "@/pages/index/Navbar";
 import { CenteredLayout } from "@/pages/index/CenteredLayout";
+import { Navbar } from "@/pages/index/Navbar";
 
 /**
  * Props for the LoadingScreen component
@@ -15,9 +15,9 @@ interface LoadingScreenProps {
  * Component for displaying loading states
  * Provides consistent loading UI with customizable messages
  */
-export function LoadingScreen({ 
-  message = "Loading today's challenge...", 
-  description = "Preparing your daily coding challenge" 
+export function LoadingScreen({
+  message = "Loading today's challenge...",
+  description = "Preparing your daily coding challenge",
 }: LoadingScreenProps) {
   return (
     <>
@@ -26,7 +26,9 @@ export function LoadingScreen({
         <div className="flex flex-col items-center space-y-8">
           <div className="text-center">
             <div className="text-lg font-semibold">{message}</div>
-            <div className="text-sm text-muted-foreground mt-2">{description}</div>
+            <div className="text-sm text-muted-foreground mt-2">
+              {description}
+            </div>
             <div className="mt-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
             </div>

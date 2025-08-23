@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/trpc/client";
 
@@ -15,7 +15,6 @@ interface CompletionModalProps {
   challengeTitle: string;
   challengeId: string;
   userTimeMs: number;
-  completedAt: Date;
   difficulty: string;
 }
 
@@ -25,7 +24,6 @@ export function CompletionModal({
   challengeTitle,
   challengeId,
   userTimeMs,
-  completedAt,
   difficulty,
 }: CompletionModalProps) {
   const [timeUntilNext, setTimeUntilNext] = useState("");

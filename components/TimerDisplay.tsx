@@ -14,7 +14,11 @@ interface TimerDisplayProps {
  * Component for displaying challenge completion timer
  * Shows elapsed time with appropriate status indicators
  */
-export function TimerDisplay({ elapsedTime, isRunning, visible }: TimerDisplayProps) {
+export function TimerDisplay({
+  elapsedTime,
+  isRunning,
+  visible,
+}: TimerDisplayProps) {
   if (!visible) {
     return null;
   }

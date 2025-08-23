@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface ClientOnlyProps {
   children: React.ReactNode;
@@ -19,4 +19,3 @@ export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
 
   return <>{children}</>;
 }
-

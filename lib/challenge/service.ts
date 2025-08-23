@@ -4,15 +4,22 @@
  * Handles both AI-generated and static challenges
  */
 
-import { getChallengeFromPool, getPoolSize, validateChallengePool } from "./static-pool";
-import { generateTodaysChallenge as generateAIChallenge, isAIEnabled } from "@/lib/ai-generation";
+import {
+  generateTodaysChallenge as generateAIChallenge,
+  isAIEnabled,
+} from "@/lib/ai-generation";
 import { logger } from "@/lib/logger";
 import type { DailyChallenge } from "@/types";
+import {
+  getChallengeFromPool,
+  getPoolSize,
+  validateChallengePool,
+} from "./static-pool";
 import type {
   ChallengeGenerationOptions,
   ChallengeGenerationResult,
-  ChallengeServiceConfig,
   ChallengeMetadata,
+  ChallengeServiceConfig,
   ChallengeValidationResult,
 } from "./types";
 
@@ -23,9 +30,9 @@ const DEFAULT_CONFIG: ChallengeServiceConfig = {
   preferAI: true,
   enableFallback: true,
   difficultyWeights: {
-    easy: 0.4,    // 40% easy
-    medium: 0.4,  // 40% medium  
-    hard: 0.2,    // 20% hard
+    easy: 0.4, // 40% easy
+    medium: 0.4, // 40% medium
+    hard: 0.2, // 20% hard
   },
   validation: {
     enabled: true,
@@ -48,14 +55,18 @@ export class ChallengeService {
 
   /**
    * Generate today's challenge using the best available method
-   * 
+   *
    * @param options - Generation options
    * @returns Promise resolving to generated challenge
    */
-  async generateTodaysChallenge(options: Partial<ChallengeGenerationOptions> = {}): Promise<ChallengeGenerationResult> {
+  async generateTodaysChallenge(
+    options: Partial<ChallengeGenerationOptions> = {},
+  ): Promise<ChallengeGenerationResult> {
     const today = getTodaysDate();
-    const difficulty = options.difficulty || getDifficultyForDate(today, this.config.difficultyWeights);
-    
+    const difficulty =
+      options.difficulty ||
+      getDifficultyForDate(today, this.config.difficultyWeights);
+
     const fullOptions: ChallengeGenerationOptions = {
       date: today,
       difficulty,
@@ -70,14 +81,14 @@ export class ChallengeService {
     if (this.config.preferAI && isAIEnabled() && !options.forceAI === false) {
       try {
         const result = await this.generateAIChallenge(fullOptions);
-        logger.info("Successfully generated AI challenge", { 
+        logger.info("Successfully generated AI challenge", {
           challengeId: result.challenge.id,
-          source: result.metadata.source 
+          source: result.metadata.source,
         });
         return result;
       } catch (error) {
-        logger.warn("AI challenge generation failed", { 
-          error: error instanceof Error ? error.message : String(error)
+        logger.warn("AI challenge generation failed", {
+          error: error instanceof Error ? error.message : String(error),
         });
 
         // Fall back to static if enabled
@@ -97,7 +108,9 @@ export class ChallengeService {
   /**
    * Generate a challenge using AI services
    */
-  private async generateAIChallenge(options: ChallengeGenerationOptions): Promise<ChallengeGenerationResult> {
+  private async generateAIChallenge(
+    options: ChallengeGenerationOptions,
+  ): Promise<ChallengeGenerationResult> {
     const startTime = Date.now();
 
     try {
@@ -118,7 +131,6 @@ export class ChallengeService {
         challenge: aiResult.challenge,
         metadata,
       };
-
     } catch (error) {
       const generationTime = Date.now() - startTime;
       logger.error("AI challenge generation failed", {
@@ -132,7 +144,9 @@ export class ChallengeService {
   /**
    * Generate a challenge using static pool
    */
-  private generateStaticChallenge(options: ChallengeGenerationOptions): ChallengeGenerationResult {
+  private generateStaticChallenge(
+    options: ChallengeGenerationOptions,
+  ): ChallengeGenerationResult {
     const { date, difficulty } = options;
 
     // Generate deterministic index based on date
@@ -153,9 +167,9 @@ export class ChallengeService {
       validationStatus: "validated", // Static challenges are pre-validated
     };
 
-    logger.info("Generated static challenge", { 
-      challengeId: challenge.id, 
-      title: challenge.title 
+    logger.info("Generated static challenge", {
+      challengeId: challenge.id,
+      title: challenge.title,
     });
 
     return {
@@ -187,14 +201,18 @@ export class ChallengeService {
     // Vim practice validation
     const vimScore = this.calculateVimPracticeScore(challenge.content);
     if (vimScore < 0.3) {
-      warnings.push("Challenge may not provide good vim practice opportunities");
+      warnings.push(
+        "Challenge may not provide good vim practice opportunities",
+      );
     }
 
     // Quality score based on various factors
     const qualityScore = this.calculateQualityScore(challenge);
 
     return {
-      isValid: errors.length === 0 && qualityScore >= this.config.validation.minQualityScore,
+      isValid:
+        errors.length === 0 &&
+        qualityScore >= this.config.validation.minQualityScore,
       errors,
       warnings,
       qualityScore,
@@ -238,7 +256,7 @@ export class ChallengeService {
       { pattern: /[;,]/g, points: 1, description: "punctuation navigation" },
     ];
 
-    factors.forEach(factor => {
+    factors.forEach((factor) => {
       const matches = content.match(factor.pattern);
       if (matches && matches.length > 0) {
         score += Math.min(factor.points, matches.length * 0.1);
@@ -263,24 +281,28 @@ export class ChallengeService {
     }
 
     // Line count
-    const lineCount = challenge.content.split('\n').length;
+    const lineCount = challenge.content.split("\n").length;
     if (lineCount >= 3 && lineCount <= 15) {
       score += 0.1;
     }
 
     // Character variety
-    const uniqueChars = new Set(challenge.content.replace(/\s/g, '')).size;
+    const uniqueChars = new Set(challenge.content.replace(/\s/g, "")).size;
     if (uniqueChars >= 10) {
       score += 0.1;
     }
 
     // Has code structure
     const codePatterns = [
-      /function\s+\w+/, /const\s+\w+\s*=/, /class\s+\w+/,
-      /for\s*\(/, /while\s*\(/, /if\s*\(/
+      /function\s+\w+/,
+      /const\s+\w+\s*=/,
+      /class\s+\w+/,
+      /for\s*\(/,
+      /while\s*\(/,
+      /if\s*\(/,
     ];
-    
-    if (codePatterns.some(pattern => pattern.test(challenge.content))) {
+
+    if (codePatterns.some((pattern) => pattern.test(challenge.content))) {
       score += 0.1;
     }
 
@@ -292,7 +314,7 @@ export class ChallengeService {
  * Get today's date in YYYY-MM-DD format
  */
 export function getTodaysDate(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 /**
@@ -300,7 +322,7 @@ export function getTodaysDate(): string {
  */
 export function getDifficultyForDate(
   date: string,
-  weights = DEFAULT_CONFIG.difficultyWeights
+  weights = DEFAULT_CONFIG.difficultyWeights,
 ): "easy" | "medium" | "hard" {
   const hash = hashString(date);
   const random = (hash % 1000) / 1000; // Normalize to 0-1
@@ -321,7 +343,7 @@ function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
   return Math.abs(hash);
@@ -343,7 +365,7 @@ export function getTodaysChallenge(): DailyChallenge {
 }
 
 /**
- * Legacy function for backward compatibility  
+ * Legacy function for backward compatibility
  * @deprecated Use ChallengeService.generateTodaysChallenge instead
  */
 export function generateChallengeForDate(date: string): DailyChallenge {

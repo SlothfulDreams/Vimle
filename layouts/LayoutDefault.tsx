@@ -1,12 +1,12 @@
 import "./style.css";
 import "./tailwind.css";
-import { ThemeProvider } from "next-themes";
-import { AuthProvider } from "@/lib/auth-context";
-import { ChallengeProvider } from "@/lib/challenge-context";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
-import { trpc } from "@/trpc/client";
+import { ThemeProvider } from "next-themes";
 import { useState } from "react";
+import { AuthProvider } from "@/lib/auth-context";
+import { ChallengeProvider } from "@/lib/challenge-context";
+import { trpc } from "@/trpc/client";
 
 export default function LayoutDefault({
   children,
@@ -21,7 +21,7 @@ export default function LayoutDefault({
           url: "/api/trpc",
         }),
       ],
-    })
+    }),
   );
 
   return (

@@ -11,7 +11,7 @@ export type ChallengeDifficulty = "easy" | "medium" | "hard";
 /**
  * Supported programming languages for challenge generation
  */
-export type ProgrammingLanguage = 
+export type ProgrammingLanguage =
   | "javascript"
   | "typescript"
   | "python"
@@ -144,16 +144,18 @@ export interface ContentValidationResult {
 export interface AIService {
   /** Service identifier */
   readonly name: string;
-  
+
   /** Generate a challenge */
-  generateChallenge(request: ChallengeGenerationRequest): Promise<GenerationResultWithMetadata>;
-  
+  generateChallenge(
+    request: ChallengeGenerationRequest,
+  ): Promise<GenerationResultWithMetadata>;
+
   /** Check service health */
   healthCheck(): Promise<ServiceHealthStatus>;
-  
+
   /** Validate service configuration */
   validateConfig(): boolean;
-  
+
   /** Get service capabilities */
   getCapabilities(): {
     supportedLanguages: ProgrammingLanguage[];

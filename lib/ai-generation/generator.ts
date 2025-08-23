@@ -4,11 +4,16 @@
  * Handles service selection, retry logic, and fallback mechanisms
  */
 
-import { GeminiChallengeService, type ChallengeGenerationOptions, isRetryableError, getRetryDelay } from "./gemini";
-import { isGeminiEnabled, aiConfig, geminiConfig } from "./config";
 import { getTodaysChallenge } from "@/lib/challenge";
 import { logger } from "@/lib/logger";
 import type { DailyChallenge } from "@/types";
+import { getAIConfig, getGeminiConfig, isGeminiEnabled } from "./config";
+import {
+  type ChallengeGenerationOptions,
+  type GeminiChallengeService,
+  getRetryDelay,
+  isRetryableError,
+} from "./gemini";
 
 /**
  * Options for challenge generation
@@ -51,19 +56,18 @@ let geminiService: GeminiChallengeService | null = null;
 /**
  * Get or create Gemini service instance
  */
-function getGeminiService(): GeminiChallengeService {
+async function getGeminiService(): Promise<GeminiChallengeService> {
   if (!geminiService && isGeminiEnabled()) {
-    geminiService = new GeminiChallengeService(
-      geminiConfig.apiKey!,
-      geminiConfig.model
-    );
-    logger.debug("Created Gemini service instance", { model: geminiConfig.model });
+    const { GeminiChallengeService } = await import("./gemini");
+    const cfg = getGeminiConfig();
+    geminiService = new GeminiChallengeService(cfg.apiKey!, cfg.model);
+    logger.debug("Created Gemini service instance", { model: cfg.model });
   }
-  
+
   if (!geminiService) {
     throw new Error("Gemini service is not available");
   }
-  
+
   return geminiService;
 }
 
@@ -72,9 +76,13 @@ function getGeminiService(): GeminiChallengeService {
  * Falls back to static challenges if AI generation fails
  */
 export async function generateTodaysChallenge(
-  options?: Partial<GenerationOptions>
+  options?: Partial<GenerationOptions>,
 ): Promise<GenerationResult> {
-  const { date = getTodaysDate(), difficulty = getDifficultyForDate(date), retries = aiConfig.maxRetries } = options || {};
+  const {
+    date = getTodaysDate(),
+    difficulty = getDifficultyForDate(date),
+    retries = getAIConfig().maxRetries,
+  } = options || {};
 
   logger.info("Starting challenge generation", { date, difficulty, retries });
 
@@ -91,25 +99,24 @@ export async function generateTodaysChallenge(
       difficulty,
       retries,
     });
-    
+
     logger.info("Successfully generated AI challenge", {
       date,
       difficulty,
       generatedBy: result.generatedBy,
       title: result.challenge.title,
     });
-    
-    return result;
 
+    return result;
   } catch (error) {
-    logger.error("All AI generation attempts failed", { 
-      date, 
-      difficulty, 
-      error: error instanceof Error ? error.message : String(error)
+    logger.error("All AI generation attempts failed", {
+      date,
+      difficulty,
+      error: error instanceof Error ? error.message : String(error),
     });
 
     // Fall back to static challenges if enabled
-    if (aiConfig.enableFallback) {
+    if (getAIConfig().enableFallback) {
       logger.info("Falling back to static challenge generation");
       return generateStaticFallback(date, difficulty);
     }
@@ -122,8 +129,10 @@ export async function generateTodaysChallenge(
 /**
  * Generate challenge with retry logic
  */
-async function generateWithRetries(options: GenerationOptions): Promise<GenerationResult> {
-  const { date, difficulty, retries = aiConfig.maxRetries } = options;
+async function generateWithRetries(
+  options: GenerationOptions,
+): Promise<GenerationResult> {
+  const { date, difficulty, retries = getAIConfig().maxRetries } = options;
   let attemptCount = 0;
   let lastError: Error | null = null;
 
@@ -131,17 +140,17 @@ async function generateWithRetries(options: GenerationOptions): Promise<Generati
     try {
       // Try Gemini service first (add other services here later)
       if (isGeminiEnabled()) {
-        const service = getGeminiService();
-        
+        const service = await getGeminiService();
+
         const generationOptions: ChallengeGenerationOptions = {
           difficulty,
           config: {
-            timeout: aiConfig.requestTimeout,
+            timeout: getAIConfig().requestTimeout,
           },
         };
 
         const result = await service.generateChallenge(generationOptions);
-        
+
         // Convert to our standard format
         const challenge: DailyChallenge = {
           id: `${date}-gemini-${difficulty}`,
@@ -164,7 +173,6 @@ async function generateWithRetries(options: GenerationOptions): Promise<Generati
       }
 
       throw new Error("No AI services available");
-
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       attemptCount++;
@@ -180,10 +188,13 @@ async function generateWithRetries(options: GenerationOptions): Promise<Generati
 
       // If we have retries left and the error is retryable
       if (attemptCount <= retries && isRetryableError(error)) {
-        const delay = getRetryDelay(error) || aiConfig.retryDelay;
-        logger.debug(`Retrying in ${delay}ms`, { attempt: attemptCount, delay });
-        
-        await new Promise(resolve => setTimeout(resolve, delay));
+        const delay = getRetryDelay(error) || getAIConfig().retryDelay;
+        logger.debug(`Retrying in ${delay}ms`, {
+          attempt: attemptCount,
+          delay,
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
       }
 
@@ -199,12 +210,15 @@ async function generateWithRetries(options: GenerationOptions): Promise<Generati
 /**
  * Generate static fallback challenge
  */
-function generateStaticFallback(date: string, difficulty: "easy" | "medium" | "hard"): GenerationResult {
+function generateStaticFallback(
+  date: string,
+  difficulty: "easy" | "medium" | "hard",
+): GenerationResult {
   // Use the existing challenge service
-  
+
   // Generate using the existing deterministic method
   const staticChallenge = getTodaysChallenge();
-  
+
   // Override the difficulty if different
   const challenge: DailyChallenge = {
     ...staticChallenge,
@@ -227,7 +241,7 @@ function generateStaticFallback(date: string, difficulty: "easy" | "medium" | "h
  */
 function getTodaysDate(): string {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  return today.toISOString().split("T")[0];
 }
 
 /**
@@ -239,13 +253,13 @@ function getDifficultyForDate(date: string): "easy" | "medium" | "hard" {
   let hash = 0;
   for (let i = 0; i < date.length; i++) {
     const char = date.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
+
   const absHash = Math.abs(hash);
   const mod = absHash % 10;
-  
+
   // Distribute difficulties: 40% easy, 40% medium, 20% hard
   if (mod < 4) return "easy";
   if (mod < 8) return "medium";
@@ -264,11 +278,11 @@ export async function getAIServicesHealth(): Promise<{
   }>;
 }> {
   const services = [];
-  
+
   // Check Gemini service
   if (isGeminiEnabled()) {
     try {
-      const gemini = getGeminiService();
+      const gemini = await getGeminiService();
       const health = await gemini.healthCheck();
       services.push({
         name: "gemini",
@@ -284,16 +298,16 @@ export async function getAIServicesHealth(): Promise<{
     }
   } else {
     services.push({
-      name: "gemini", 
+      name: "gemini",
       status: "disabled" as const,
       details: "API key not configured",
     });
   }
 
   // Determine overall health
-  const healthyCount = services.filter(s => s.status === "healthy").length;
-  const totalEnabled = services.filter(s => s.status !== "disabled").length;
-  
+  const healthyCount = services.filter((s) => s.status === "healthy").length;
+  const totalEnabled = services.filter((s) => s.status !== "disabled").length;
+
   let overall: "healthy" | "degraded" | "unhealthy" | "disabled";
   if (totalEnabled === 0) {
     overall = "disabled";

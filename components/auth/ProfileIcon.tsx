@@ -1,6 +1,6 @@
-import { useAuth } from "@/lib/auth-context";
-import { Button } from "@/components/ui/button";
 import { User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 import { LoginDialog } from "./LoginDialog";
 import { UserDropdown } from "./UserDropdown";
 

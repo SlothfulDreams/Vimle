@@ -1,41 +1,42 @@
 import { lazy, Suspense } from "react";
+import { ChallengeDisplay } from "@/components/ChallengeDisplay";
+import { EditorContainer } from "@/components/EditorContainer";
+import { LoadingScreen } from "@/components/LoadingScreen";
+import { StatusDisplay } from "@/components/StatusDisplay";
+import { TimerDisplay } from "@/components/TimerDisplay";
+import { useTimer } from "@/hooks/useTimer";
+import { useChallenge } from "@/lib/challenge-context";
+import { logger } from "@/lib/logger";
 import { CenteredLayout } from "./CenteredLayout";
-import { Navbar } from "./Navbar";
-import { Instructions } from "./Instructions";
 import { Challenge } from "./Challenge";
 import { CompletionModal } from "./CompletionModal";
-import { useChallenge } from "@/lib/challenge-context";
-import { EditorContainer } from "@/components/EditorContainer";
-import { ChallengeDisplay } from "@/components/ChallengeDisplay";
-import { TimerDisplay } from "@/components/TimerDisplay";
-import { StatusDisplay } from "@/components/StatusDisplay";
-import { LoadingScreen } from "@/components/LoadingScreen";
-import { useTimer } from "@/hooks/useTimer";
-import { logger } from "@/lib/logger";
+import { Instructions } from "./Instructions";
+import { Navbar } from "./Navbar";
 
 /**
  * Lazy load conditional components for better performance
  * Code splitting ensures TomorrowScreen is only loaded when needed
  */
-const TomorrowScreen = lazy(() => import("./TomorrowScreen").then(m => ({ default: m.TomorrowScreen })));
-
+const TomorrowScreen = lazy(() =>
+  import("./TomorrowScreen").then((m) => ({ default: m.TomorrowScreen })),
+);
 
 /**
  * Main game component for Vimle challenge interface
  * Orchestrates the daily coding challenge experience with vim editors
  */
 export default function VimleGame() {
-  const { 
-    todaysChallenge, 
-    userAttempt, 
-    isCompleted, 
-    canAttempt, 
+  const {
+    todaysChallenge,
+    userAttempt,
+    isCompleted,
+    canAttempt,
     loading,
     showTomorrowScreen,
     showCompletionModal,
-    setCompletionModal
+    setCompletionModal,
   } = useChallenge();
-  
+
   const timer = useTimer();
 
   /**
@@ -45,7 +46,7 @@ export default function VimleGame() {
   const handleUserInteraction = () => {
     if (!timer.isRunning) {
       timer.startTimer();
-      logger.challenge.started(todaysChallenge?.id || 'unknown');
+      logger.challenge.started(todaysChallenge?.id || "unknown");
     }
   };
 
@@ -57,12 +58,14 @@ export default function VimleGame() {
   // Show tomorrow screen for completed challenges
   if (showTomorrowScreen && todaysChallenge && userAttempt) {
     return (
-      <Suspense fallback={
-        <LoadingScreen 
-          message="Loading completion screen..." 
-          description="Preparing your challenge results"
-        />
-      }>
+      <Suspense
+        fallback={
+          <LoadingScreen
+            message="Loading completion screen..."
+            description="Preparing your challenge results"
+          />
+        }
+      >
         <TomorrowScreen
           challengeTitle={todaysChallenge.title}
           completionTimeMs={userAttempt.timeMs || 0}
@@ -85,7 +88,7 @@ export default function VimleGame() {
           ) : (
             <Challenge />
           )}
-          
+
           {/* Instructions */}
           <Instructions />
 
@@ -123,11 +126,9 @@ export default function VimleGame() {
           challengeTitle={todaysChallenge.title}
           challengeId={todaysChallenge.id}
           userTimeMs={userAttempt.timeMs || 0}
-          completedAt={userAttempt.completedAt || new Date()}
           difficulty={todaysChallenge.difficulty}
         />
       )}
     </>
   );
 }
-

@@ -11,34 +11,38 @@ import { z } from "zod";
  */
 export const geminiChallengeResponseSchema = z.object({
   /** The starting code that users will edit (incomplete/incorrect version) */
-  startingContent: z.string()
+  startingContent: z
+    .string()
     .min(10, "Starting content must be at least 10 characters")
     .max(1000, "Starting content must be less than 1000 characters")
     .refine(
       (val) => val.trim().length > 0,
-      "Starting content cannot be empty or only whitespace"
+      "Starting content cannot be empty or only whitespace",
     ),
-  
+
   /** The target code that users need to achieve (correct version) */
-  content: z.string()
+  content: z
+    .string()
     .min(10, "Content must be at least 10 characters")
     .max(1000, "Content must be less than 1000 characters")
     .refine(
       (val) => val.trim().length > 0,
-      "Content cannot be empty or only whitespace"
+      "Content cannot be empty or only whitespace",
     ),
-  
+
   /** Human-readable title for the challenge */
-  title: z.string()
+  title: z
+    .string()
     .min(5, "Title must be at least 5 characters")
     .max(100, "Title must be less than 100 characters")
     .refine(
       (val) => val.trim().length > 0,
-      "Title cannot be empty or only whitespace"
+      "Title cannot be empty or only whitespace",
     ),
-  
+
   /** Optional explanation of what the editing challenge involves */
-  explanation: z.string()
+  explanation: z
+    .string()
     .max(500, "Explanation must be less than 500 characters")
     .optional(),
 });
@@ -46,7 +50,9 @@ export const geminiChallengeResponseSchema = z.object({
 /**
  * Inferred TypeScript type from the Zod schema
  */
-export type GeminiChallengeResponse = z.infer<typeof geminiChallengeResponseSchema>;
+export type GeminiChallengeResponse = z.infer<
+  typeof geminiChallengeResponseSchema
+>;
 
 /**
  * Difficulty levels supported by the Gemini service

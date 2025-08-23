@@ -1,11 +1,8 @@
-// Load environment variables before any other imports
-import "dotenv/config";
-
-import { vikeHandler } from "./server/vike-handler";
+import { createHandler } from "@universal-middleware/hono";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { createHandler } from "@universal-middleware/hono";
 import { trpcHandler } from "./server/trpc-handler";
+import { vikeHandler } from "./server/vike-handler";
 
 const app = new Hono();
 
@@ -22,4 +19,4 @@ export const GET = handle(app);
 
 export const POST = handle(app);
 
-export default process.env.NODE_ENV === "production" ? undefined : app;
+export default app;

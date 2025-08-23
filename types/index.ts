@@ -71,7 +71,20 @@ export interface ChallengeUIState {
 /**
  * Vim motion types for editor interaction tracking
  */
-export type VimMotion = "h" | "j" | "k" | "l" | "w" | "b" | "d" | "y" | "p" | "u" | "i" | "a" | "o";
+export type VimMotion =
+  | "h"
+  | "j"
+  | "k"
+  | "l"
+  | "w"
+  | "b"
+  | "d"
+  | "y"
+  | "p"
+  | "u"
+  | "i"
+  | "a"
+  | "o";
 
 /**
  * Editor configuration and state
@@ -131,7 +144,7 @@ export interface LocalChallengeAttempt {
 /**
  * Error types for better error handling
  */
-export type AppError = 
+export type AppError =
   | { type: "CHALLENGE_NOT_FOUND"; message: string }
   | { type: "SUBMISSION_FAILED"; message: string; details?: unknown }
   | { type: "AUTH_ERROR"; message: string }

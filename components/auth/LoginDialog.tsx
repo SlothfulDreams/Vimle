@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/lib/auth-context";
 
 interface LoginDialogProps {
   children: React.ReactNode;
@@ -148,7 +148,9 @@ export function LoginDialog({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    autoComplete={
+                      isSignUp ? "new-password" : "current-password"
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Enter your password"
                   />
@@ -220,4 +222,3 @@ export function LoginDialog({
     </Dialog>
   );
 }
-

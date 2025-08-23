@@ -4,31 +4,34 @@
  */
 
 // Main service
-export { ChallengeService, challengeService } from "./service";
-
 // Legacy compatibility functions
-export { getTodaysChallenge, generateChallengeForDate, getTodaysDate, getDifficultyForDate } from "./service";
-
+export {
+  ChallengeService,
+  challengeService,
+  generateChallengeForDate,
+  getDifficultyForDate,
+  getTodaysChallenge,
+  getTodaysDate,
+} from "./service";
+export type { StaticChallenge } from "./static-pool";
 // Static pool utilities
-export { 
-  STATIC_CHALLENGE_POOL,
+export {
   getChallengeFromPool,
-  getRandomChallengeFromPool,
   getPoolSize,
+  getRandomChallengeFromPool,
+  STATIC_CHALLENGE_POOL,
   validateChallengePool,
 } from "./static-pool";
 
-export type { StaticChallenge } from "./static-pool";
-
 // Types
 export type {
-  DailyChallenge,
-  ChallengeSource,
-  ChallengeMetadata,
-  ChallengeStats,
   ChallengeAttempt,
-  ChallengeValidationResult,
   ChallengeGenerationOptions,
   ChallengeGenerationResult,
+  ChallengeMetadata,
   ChallengeServiceConfig,
+  ChallengeSource,
+  ChallengeStats,
+  ChallengeValidationResult,
+  DailyChallenge,
 } from "./types";

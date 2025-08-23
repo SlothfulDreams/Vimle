@@ -1,10 +1,10 @@
-import { useCallback, useRef, useEffect } from "react";
-import CodeMirror from "@uiw/react-codemirror";
-import { vim } from "@replit/codemirror-vim";
 import { javascript } from "@codemirror/lang-javascript";
 import { oneDark } from "@codemirror/theme-one-dark";
-import { EditorView, keymap } from "@codemirror/view";
 import type { EditorView as EditorViewType } from "@codemirror/view";
+import { EditorView, keymap } from "@codemirror/view";
+import { vim } from "@replit/codemirror-vim";
+import CodeMirror from "@uiw/react-codemirror";
+import { useCallback, useEffect, useRef } from "react";
 import { createVimKeyBindings } from "@/config/vimKeyBindings";
 import type { VimEditorProps } from "@/types";
 
@@ -149,9 +149,10 @@ export function VimEditor({
     (event: React.KeyboardEvent) => {
       if (readonly) {
         // Block copy/select all/cut shortcuts in readonly mode
-        const isCopyShortcut = (event.ctrlKey || event.metaKey) &&
+        const isCopyShortcut =
+          (event.ctrlKey || event.metaKey) &&
           ["c", "a", "x"].includes(event.key.toLowerCase());
-        
+
         if (isCopyShortcut) {
           event.preventDefault();
         }

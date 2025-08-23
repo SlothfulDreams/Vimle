@@ -23,15 +23,13 @@ const processId = process.pid || Math.random().toString(36).substring(7);
 export const db =
   globalThis.__prisma ||
   new PrismaClient({
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["error", "warn"]
-        : ["error"],
+    log: process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
     // Use direct connection in development to avoid pooler conflicts
-    datasourceUrl: process.env.NODE_ENV === "development" 
-      ? process.env.DIRECT_URL || process.env.DATABASE_URL
-      : process.env.DATABASE_URL,
-    errorFormat: 'minimal',
+    datasourceUrl:
+      process.env.NODE_ENV === "development"
+        ? process.env.DIRECT_URL || process.env.DATABASE_URL
+        : process.env.DATABASE_URL,
+    errorFormat: "minimal",
   });
 
 // In development, store the client in globalThis to prevent multiple instances
@@ -73,12 +71,18 @@ export async function ensureUser(
     return user;
   } catch (error) {
     // Retry once if it's a prepared statement conflict
-    if (retryCount === 0 && error instanceof Error && error.message.includes('prepared statement')) {
-      console.warn('🔄 Retrying user operation due to prepared statement conflict');
-      await new Promise(resolve => setTimeout(resolve, 100)); // Brief delay
+    if (
+      retryCount === 0 &&
+      error instanceof Error &&
+      error.message.includes("prepared statement")
+    ) {
+      console.warn(
+        "🔄 Retrying user operation due to prepared statement conflict",
+      );
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Brief delay
       return ensureUser(userId, email, name, 1);
     }
-    
+
     console.error("Error ensuring user exists:", error);
     throw new Error("Failed to create or update user");
   }
@@ -115,12 +119,25 @@ export async function ensureChallenge(
     return challenge;
   } catch (error) {
     // Retry once if it's a prepared statement conflict
-    if (retryCount === 0 && error instanceof Error && error.message.includes('prepared statement')) {
-      console.warn('🔄 Retrying challenge operation due to prepared statement conflict');
-      await new Promise(resolve => setTimeout(resolve, 100)); // Brief delay
-      return ensureChallenge(challengeId, challengeDate, content, title, difficulty, 1);
+    if (
+      retryCount === 0 &&
+      error instanceof Error &&
+      error.message.includes("prepared statement")
+    ) {
+      console.warn(
+        "🔄 Retrying challenge operation due to prepared statement conflict",
+      );
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Brief delay
+      return ensureChallenge(
+        challengeId,
+        challengeDate,
+        content,
+        title,
+        difficulty,
+        1,
+      );
     }
-    
+
     console.error("Error ensuring challenge exists:", error);
     throw new Error("Failed to create or update challenge");
   }

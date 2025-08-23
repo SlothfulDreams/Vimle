@@ -1,5 +1,6 @@
-import { useAuth } from "@/lib/auth-context";
+import { BarChart3, LogOut, Settings, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,8 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { User, BarChart3, Settings, LogOut } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export function UserDropdown() {
   const { user, signOut } = useAuth();
@@ -51,9 +51,7 @@ export function UserDropdown() {
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {displayName}
-            </p>
+            <p className="text-sm font-medium leading-none">{displayName}</p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}
             </p>

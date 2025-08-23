@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 /**
  * Custom hook for debouncing function calls
  * Useful for expensive operations like content comparison
- * 
+ *
  * @param callback - Function to debounce
  * @param delay - Delay in milliseconds
  * @param dependencies - Dependencies that trigger the debounced call

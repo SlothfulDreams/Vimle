@@ -19,12 +19,14 @@ datasource db {
 }
 
 model User {
-  id         String   @id @db.Uuid
-  email      String   @unique
-  name       String?
-  avatar_url String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
+  id           String   @id @db.Uuid
+  email        String   @unique
+  name         String?
+  display_name String?
+  avatar_url   String?
+  preferences  Json?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
   attempts ChallengeAttempt[]
 

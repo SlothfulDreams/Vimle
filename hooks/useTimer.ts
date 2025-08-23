@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { TimerState } from "@/types";
 
 /**
  * Custom hook for managing challenge completion timer
  * Provides precise timing functionality with 10ms updates for smooth display
- * 
+ *
  * @returns Timer state and control functions
  */
 export function useTimer() {
@@ -34,7 +34,7 @@ export function useTimer() {
    * @returns The final elapsed time in milliseconds
    */
   const stopTimer = useCallback(() => {
-    setTimerState(prev => ({
+    setTimerState((prev) => ({
       ...prev,
       isRunning: false,
     }));
@@ -59,7 +59,7 @@ export function useTimer() {
   useEffect(() => {
     if (timerState.isRunning && timerState.startTime) {
       intervalRef.current = setInterval(() => {
-        setTimerState(prev => ({
+        setTimerState((prev) => ({
           ...prev,
           elapsedTime: Date.now() - (prev.startTime || 0),
         }));

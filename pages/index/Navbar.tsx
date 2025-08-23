@@ -1,8 +1,8 @@
 import { Moon, Sun, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
-import { ClientOnly } from "@/components/ClientOnly";
 import { ProfileIcon } from "@/components/auth/ProfileIcon";
+import { ClientOnly } from "@/components/ClientOnly";
+import { Button } from "@/components/ui/button";
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();

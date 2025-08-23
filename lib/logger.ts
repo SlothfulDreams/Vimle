@@ -17,7 +17,8 @@ interface LogEntry {
  */
 class Logger {
   private isDevelopment = process.env.NODE_ENV === "development";
-  private isDebugEnabled = this.isDevelopment || process.env.VITE_DEBUG === "true";
+  private isDebugEnabled =
+    this.isDevelopment || process.env.VITE_DEBUG === "true";
 
   /**
    * Log debug information (development only)
@@ -102,17 +103,25 @@ class Logger {
       this.info("Challenge started", { challengeId });
     },
     completed: (challengeId: string, timeMs: number) => {
-      this.info("Challenge completed", { challengeId, timeMs, timeSeconds: (timeMs / 1000).toFixed(2) });
+      this.info("Challenge completed", {
+        challengeId,
+        timeMs,
+        timeSeconds: (timeMs / 1000).toFixed(2),
+      });
     },
     failed: (challengeId: string, error: unknown) => {
       this.error("Challenge completion failed", { challengeId, error });
     },
-    contentMatch: (challengeId: string, leftLength: number, rightLength: number) => {
-      this.debug("Content comparison", { 
-        challengeId, 
-        leftLength, 
-        rightLength, 
-        match: leftLength === rightLength 
+    contentMatch: (
+      challengeId: string,
+      leftLength: number,
+      rightLength: number,
+    ) => {
+      this.debug("Content comparison", {
+        challengeId,
+        leftLength,
+        rightLength,
+        match: leftLength === rightLength,
       });
     },
   };

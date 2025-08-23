@@ -1,10 +1,10 @@
-import { initTRPC } from "@trpc/server";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { generateChallengeForDate, getTodaysDate, getDifficultyForDate } from "@/lib/challenge";
 import { generateTodaysChallenge } from "@/lib/ai-generation";
 import { isGeminiEnabled } from "@/lib/ai-generation/config";
-import { db, ensureUser, ensureChallenge } from "@/prisma/database";
+import { challengeService, getTodaysDate } from "@/lib/challenge";
 import { logger } from "@/lib/logger";
+import { db, ensureChallenge, ensureUser } from "@/prisma/database";
 import type { DifficultyLevel } from "@/types";
 
 /**
@@ -12,27 +12,51 @@ import type { DifficultyLevel } from "@/types";
  * Ensures type safety and input validation across the API
  */
 const schemas = {
-  userId: z.string().min(1, "User ID is required"),
-  userEmail: z.string().email("Invalid email format").optional(),
-  challengeId: z.string().min(1, "Challenge ID is required"),
-  challengeDate: z.string().min(1, "Challenge date is required"),
-  timeMs: z.number().positive("Time must be positive"),
-  difficulty: z.enum(["easy", "medium", "hard"]),
+  userId: z.string().min(1, "User ID is required and cannot be empty"),
+  userEmail: z
+    .string()
+    .email({ message: "Please provide a valid email address" })
+    .optional(),
+  challengeId: z
+    .string()
+    .min(1, "Challenge ID is required and cannot be empty"),
+  challengeDate: z.string().min(1, "Challenge date is required in ISO format"),
+  timeMs: z
+    .number()
+    .positive("Completion time must be a positive number in milliseconds"),
+  difficulty: z.enum(
+    ["easy", "medium", "hard"],
+    "Difficulty must be 'easy', 'medium', or 'hard'",
+  ),
   forceAI: z.boolean().optional().default(false),
   localAttempt: z.object({
-    challengeId: z.string(),
-    challengeDate: z.string(),
-    completedAt: z.string(),
-    timeMs: z.number(),
-    difficulty: z.string(),
+    challengeId: z.string().min(1, "Challenge ID is required"),
+    challengeDate: z.string().min(1, "Challenge date is required"),
+    completedAt: z.string().min(1, "Completion timestamp is required"),
+    timeMs: z.number().positive("Time must be positive"),
+    difficulty: z.string().min(1, "Difficulty level is required"),
   }),
-} as const;
+};
 
 /**
  * Initialization of tRPC backend
  * Should be done only once per backend!
  */
-const t = initTRPC.context<object>().create();
+const t = initTRPC.context<object>().create({
+  errorFormatter(opts) {
+    const { shape, error } = opts;
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        zodError:
+          error.code === "BAD_REQUEST" && error.cause instanceof Error
+            ? error.cause
+            : null,
+      },
+    };
+  },
+});
 
 /**
  * Export reusable router and procedure helpers
@@ -42,21 +66,6 @@ export const router = t.router;
 export const publicProcedure = t.procedure;
 
 export const appRouter = router({
-  demo: publicProcedure.query(async () => {
-    return { demo: true };
-  }),
-
-  onNewTodo: publicProcedure
-    .input((value): string => {
-      if (typeof value === "string") {
-        return value;
-      }
-      throw new Error("Input is not a string");
-    })
-    .mutation(async (opts) => {
-      console.log("Received new todo", { text: opts.input });
-    }),
-
   /**
    * Retrieves today's challenge, generating one if it doesn't exist
    * Handles both AI-generated and static challenges with graceful fallbacks
@@ -76,22 +85,18 @@ export const appRouter = router({
           },
         });
       } catch (dbError) {
-        logger.warn(
-          "Database query failed, proceeding with generation",
-          { error: dbError instanceof Error ? dbError.message : String(dbError) }
-        );
+        logger.warn("Database query failed, proceeding with generation", {
+          error: dbError instanceof Error ? dbError.message : String(dbError),
+        });
         // Continue to generation - don't let DB errors stop us
       }
 
       if (existingChallenge) {
-        logger.info(
-          "Found existing challenge",
-          { 
-            title: existingChallenge.title, 
-            generatedBy: existingChallenge.generated_by,
-            difficulty: existingChallenge.difficulty 
-          }
-        );
+        logger.info("Found existing challenge", {
+          title: existingChallenge.title,
+          generatedBy: existingChallenge.generated_by,
+          difficulty: existingChallenge.difficulty,
+        });
         // Return existing challenge from database
         return {
           id: existingChallenge.id,
@@ -126,30 +131,29 @@ export const appRouter = router({
               validation_status: "validated",
             },
           });
-          logger.info("Stored AI challenge in database", { challengeId: challenge.id });
+          logger.info("Stored AI challenge in database", {
+            challengeId: challenge.id,
+          });
         } catch (dbError) {
-          logger.warn(
-            "Failed to store challenge in database, but continuing",
-            { error: dbError instanceof Error ? dbError.message : String(dbError) }
-          );
+          logger.warn("Failed to store challenge in database, but continuing", {
+            error: dbError instanceof Error ? dbError.message : String(dbError),
+          });
           // Continue without database storage - better to return challenge than fail
         }
 
-        logger.info(
-          "Generated new AI challenge",
-          { 
-            generatedBy: generationResult.generatedBy, 
-            title: challenge.title,
-            difficulty: challenge.difficulty 
-          }
-        );
+        logger.info("Generated new AI challenge", {
+          generatedBy: generationResult.generatedBy,
+          title: challenge.title,
+          difficulty: challenge.difficulty,
+        });
         return challenge;
       }
 
       // Fallback to static challenge generation
       logger.info("Using static challenge generation (AI disabled)");
-      const todaysDate = new Date().toISOString().split('T')[0];
-      const staticChallenge = generateChallengeForDate(todaysDate);
+      const staticChallengeResult =
+        await challengeService.generateTodaysChallenge({ forceAI: false });
+      const staticChallenge = staticChallengeResult.challenge;
 
       // Store static challenge in database for consistency
       await db.challenge.create({
@@ -168,8 +172,10 @@ export const appRouter = router({
     } catch (error) {
       console.error("Error in getTodaysChallenge:", error);
       // Ultimate fallback to static generation without database storage
-      const todaysDate = new Date().toISOString().split('T')[0];
-      return generateChallengeForDate(todaysDate);
+      const fallbackResult = await challengeService.generateTodaysChallenge({
+        forceAI: false,
+      });
+      return fallbackResult.challenge;
     }
   }),
 
@@ -201,10 +207,12 @@ export const appRouter = router({
           if (isGeminiEnabled()) {
             generationResult = await generateTodaysChallenge();
           } else {
-            const todaysDate = new Date().toISOString().split('T')[0];
-            const staticChallenge = generateChallengeForDate(todaysDate);
+            const staticChallengeResult =
+              await challengeService.generateTodaysChallenge({
+                forceAI: false,
+              });
             generationResult = {
-              challenge: staticChallenge,
+              challenge: staticChallengeResult.challenge,
               promptUsed: "Static regeneration",
               generatedBy: "static" as const,
             };
@@ -240,9 +248,11 @@ export const appRouter = router({
         };
       } catch (error) {
         console.error("Failed to regenerate challenge:", error);
-        throw new Error(
-          `Failed to regenerate challenge: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to regenerate challenge: ${error instanceof Error ? error.message : "Unknown error"}`,
+          cause: error,
+        });
       }
     }),
 
@@ -270,8 +280,9 @@ export const appRouter = router({
     .query(async ({ input }) => {
       try {
         // Get today's challenge if no specific date provided
-        const targetDate = input.challengeDate || getTodaysDate();
-        const todaysChallenge = generateChallengeForDate(targetDate);
+        const todaysChallengeResult =
+          await challengeService.generateTodaysChallenge({ forceAI: false });
+        const todaysChallenge = todaysChallengeResult.challenge;
 
         // Query the database for user's attempt
         const attempt = await db.challengeAttempt.findFirst({
@@ -321,7 +332,9 @@ export const appRouter = router({
     .mutation(async ({ input }) => {
       try {
         // Get today's challenge details to ensure we have complete data
-        const todaysChallenge = generateChallengeForDate(input.challengeDate);
+        const todaysChallengeResult =
+          await challengeService.generateTodaysChallenge({ forceAI: false });
+        const todaysChallenge = todaysChallengeResult.challenge;
 
         // Ensure user exists in database
         await ensureUser(input.userId, input.userEmail);
@@ -384,23 +397,33 @@ export const appRouter = router({
         // Provide more specific error messages
         if (error instanceof Error) {
           if (error.message.includes("unique constraint")) {
-            throw new Error("Challenge attempt already exists for this user");
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: "Challenge attempt already exists for this user",
+              cause: error,
+            });
           }
           if (error.message.includes("foreign key")) {
-            throw new Error("Invalid user or challenge reference");
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Invalid user or challenge reference",
+              cause: error,
+            });
           }
         }
 
-        throw new Error(
-          `Failed to save challenge completion: ${error instanceof Error ? error.message : "Unknown error"}`,
-        );
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to save challenge completion: ${error instanceof Error ? error.message : "Unknown error"}`,
+          cause: error,
+        });
       }
     }),
 
   getGlobalChallengeStats: publicProcedure
     .input(
       z.object({
-        challengeId: z.string(),
+        challengeId: schemas.challengeId,
       }),
     )
     .query(async ({ input }) => {
@@ -426,12 +449,12 @@ export const appRouter = router({
 
         // Calculate global statistics for this challenge
         const totalTime = attempts.reduce(
-          (sum: number, attempt: any) => sum + (attempt.time_ms || 0),
+          (sum: number, attempt) => sum + (attempt.time_ms || 0),
           0,
         );
         const averageTime = Math.round(totalTime / totalCompletions);
         const fastestTime = Math.min(
-          ...attempts.map((attempt: any) => attempt.time_ms || Infinity),
+          ...attempts.map((attempt) => attempt.time_ms || Infinity),
         );
 
         return {
@@ -453,7 +476,7 @@ export const appRouter = router({
   getChallengeStats: publicProcedure
     .input(
       z.object({
-        userId: z.string(),
+        userId: schemas.userId,
       }),
     )
     .query(async ({ input }) => {
@@ -484,19 +507,19 @@ export const appRouter = router({
 
         // Calculate statistics
         const totalTime = attempts.reduce(
-          (sum: number, attempt: any) => sum + (attempt.time_ms || 0),
+          (sum: number, attempt) => sum + (attempt.time_ms || 0),
           0,
         );
         const averageTime = Math.round(totalTime / completedChallenges);
         const bestTime = Math.min(
-          ...attempts.map((attempt: any) => attempt.time_ms || Infinity),
+          ...attempts.map((attempt) => attempt.time_ms || Infinity),
         );
 
         // Calculate current streak (consecutive days)
         let currentStreak = 0;
         const today = new Date();
         const sortedAttempts = attempts.sort(
-          (a: any, b: any) =>
+          (a, b) =>
             new Date(b.attempt_date).getTime() -
             new Date(a.attempt_date).getTime(),
         );
@@ -537,16 +560,10 @@ export const appRouter = router({
   migrateLocalData: publicProcedure
     .input(
       z.object({
-        userId: z.string(),
-        localAttempts: z.array(
-          z.object({
-            challengeId: z.string(),
-            challengeDate: z.string(),
-            completedAt: z.string(),
-            timeMs: z.number(),
-            difficulty: z.string(),
-          }),
-        ),
+        userId: schemas.userId,
+        localAttempts: z
+          .array(schemas.localAttempt)
+          .min(1, "At least one attempt is required for migration"),
       }),
     )
     .mutation(async ({ input }) => {
@@ -614,9 +631,304 @@ export const appRouter = router({
         };
       } catch (error) {
         console.error("Failed to migrate local data:", error);
-        throw new Error("Failed to migrate localStorage data to database");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to migrate localStorage data to database",
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Retrieves user's challenge history with pagination
+   * Returns completed challenges with timestamps and performance data
+   */
+  getChallengeHistory: publicProcedure
+    .input(
+      z.object({
+        userId: schemas.userId,
+        limit: z.number().min(1).max(100).optional().default(10),
+        offset: z.number().min(0).optional().default(0),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const challenges = await db.challengeAttempt.findMany({
+          where: {
+            user_id: input.userId,
+            completed_at: { not: null },
+          },
+          include: {
+            challenge: {
+              select: {
+                id: true,
+                title: true,
+                difficulty: true,
+                date: true,
+              },
+            },
+          },
+          orderBy: {
+            attempt_date: "desc",
+          },
+          take: input.limit,
+          skip: input.offset,
+        });
+
+        return {
+          challenges: challenges.map((attempt) => ({
+            id: attempt.id,
+            challengeId: attempt.challenge_id,
+            title: attempt.challenge?.title || "Unknown Challenge",
+            difficulty: attempt.challenge?.difficulty || "medium",
+            completedAt: attempt.completed_at,
+            timeMs: attempt.time_ms,
+            challengeDate: attempt.challenge?.date,
+          })),
+          total: await db.challengeAttempt.count({
+            where: {
+              user_id: input.userId,
+              completed_at: { not: null },
+            },
+          }),
+        };
+      } catch (error) {
+        console.error("Failed to fetch challenge history:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve challenge history",
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Updates user profile information
+   * Allows updating display name and preferences
+   */
+  updateUserProfile: publicProcedure
+    .input(
+      z.object({
+        userId: schemas.userId,
+        displayName: z
+          .string()
+          .min(1, "Display name is required")
+          .max(50, "Display name too long")
+          .optional(),
+        preferences: z
+          .object({
+            theme: z.enum(["light", "dark", "auto"]).optional(),
+            difficulty: schemas.difficulty.optional(),
+          })
+          .optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        // Ensure user exists
+        await ensureUser(input.userId);
+
+        const updateData: {
+          display_name?: string;
+          preferences?: object;
+        } = {};
+        if (input.displayName) {
+          updateData.display_name = input.displayName;
+        }
+        if (input.preferences) {
+          updateData.preferences = input.preferences;
+        }
+
+        const updatedUser = await db.user.update({
+          where: { id: input.userId },
+          data: updateData,
+        });
+
+        return {
+          success: true,
+          user: {
+            id: updatedUser.id,
+            displayName: updatedUser.display_name,
+            preferences: updatedUser.preferences,
+          },
+        };
+      } catch (error) {
+        console.error("Failed to update user profile:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update user profile",
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Retrieves challenge leaderboard for a specific challenge
+   * Shows top performers with their completion times
+   */
+  getChallengeLeaderboard: publicProcedure
+    .input(
+      z.object({
+        challengeId: schemas.challengeId,
+        limit: z.number().min(1).max(100).optional().default(10),
+      }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const leaderboard = await db.challengeAttempt.findMany({
+          where: {
+            challenge_id: input.challengeId,
+            completed_at: { not: null },
+            time_ms: { not: null },
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                display_name: true,
+              },
+            },
+            challenge: {
+              select: {
+                title: true,
+                difficulty: true,
+              },
+            },
+          },
+          orderBy: {
+            time_ms: "asc", // Fastest times first
+          },
+          take: input.limit,
+        });
+
+        return {
+          challengeTitle:
+            leaderboard[0]?.challenge?.title || "Unknown Challenge",
+          difficulty: leaderboard[0]?.challenge?.difficulty || "medium",
+          entries: leaderboard.map((entry, index) => ({
+            rank: index + 1,
+            userId: entry.user_id,
+            displayName: entry.user?.display_name || "Anonymous",
+            timeMs: entry.time_ms,
+            completedAt: entry.completed_at,
+          })),
+        };
+      } catch (error) {
+        console.error("Failed to fetch leaderboard:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to retrieve challenge leaderboard",
+          cause: error,
+        });
+      }
+    }),
+
+  /**
+   * Validates a challenge solution in real-time
+   * Compares user input against expected output
+   */
+  validateChallengeSolution: publicProcedure
+    .input(
+      z.object({
+        challengeId: schemas.challengeId,
+        userSolution: z.string().min(1, "Solution cannot be empty"),
+        challengeDate: schemas.challengeDate.optional(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      try {
+        const challengeResult = await challengeService.generateTodaysChallenge({
+          forceAI: false,
+        });
+        const challenge = challengeResult.challenge;
+
+        if (challenge.id !== input.challengeId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid challenge ID for the specified date",
+          });
+        }
+
+        // Simple validation - normalize whitespace and compare
+        const normalizeCode = (code: string) =>
+          code.replace(/\s+/g, " ").trim();
+
+        const userNormalized = normalizeCode(input.userSolution);
+        const expectedNormalized = normalizeCode(challenge.content);
+
+        const isCorrect = userNormalized === expectedNormalized;
+        const similarity = calculateSimilarity(
+          userNormalized,
+          expectedNormalized,
+        );
+
+        return {
+          isCorrect,
+          similarity,
+          feedback: isCorrect
+            ? "Perfect! Your solution matches the expected output."
+            : similarity > 0.8
+              ? "Very close! Check for minor differences."
+              : similarity > 0.5
+                ? "Good progress, but there are several differences."
+                : "Your solution needs significant changes.",
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        console.error("Failed to validate solution:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to validate challenge solution",
+          cause: error,
+        });
       }
     }),
 });
+
+/**
+ * Simple similarity calculation using Levenshtein distance
+ * Returns a value between 0 and 1, where 1 is identical
+ */
+function calculateSimilarity(str1: string, str2: string): number {
+  const longer = str1.length > str2.length ? str1 : str2;
+  const shorter = str1.length > str2.length ? str2 : str1;
+
+  if (longer.length === 0) return 1.0;
+
+  const distance = levenshteinDistance(longer, shorter);
+  return (longer.length - distance) / longer.length;
+}
+
+/**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshteinDistance(str1: string, str2: string): number {
+  const matrix = Array(str2.length + 1)
+    .fill(null)
+    .map(() => Array(str1.length + 1).fill(null));
+
+  for (let i = 0; i <= str1.length; i++) {
+    matrix[0][i] = i;
+  }
+
+  for (let j = 0; j <= str2.length; j++) {
+    matrix[j][0] = j;
+  }
+
+  for (let j = 1; j <= str2.length; j++) {
+    for (let i = 1; i <= str1.length; i++) {
+      const substitutionCost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[j][i] = Math.min(
+        matrix[j][i - 1] + 1, // deletion
+        matrix[j - 1][i] + 1, // insertion
+        matrix[j - 1][i - 1] + substitutionCost, // substitution
+      );
+    }
+  }
+
+  return matrix[str2.length][str1.length];
+}
 
 export type AppRouter = typeof appRouter;

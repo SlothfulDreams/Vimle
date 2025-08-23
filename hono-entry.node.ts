@@ -5,7 +5,9 @@ import { env } from "hono/adapter";
 import { compress } from "hono/compress";
 import app from "./hono-entry.js";
 
-const envs = env<{ NODE_ENV?: string; PORT?: string }>({ env: {} } as unknown as Context<{
+const envs = env<{ NODE_ENV?: string; PORT?: string }>({
+  env: {},
+} as unknown as Context<{
   Bindings: { NODE_ENV?: string; PORT?: string };
 }>);
 
@@ -20,7 +22,7 @@ nodeApp.use(
   }),
 );
 
-nodeApp.route("/", app!);
+nodeApp.route("/", app as Hono);
 
 const port = envs.PORT ? parseInt(envs.PORT, 10) : 3000;
 

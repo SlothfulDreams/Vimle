@@ -143,3 +143,5 @@ cdk.out
 
 /lib/generated/prisma
 *.local.*
+
+.playwright-mcp

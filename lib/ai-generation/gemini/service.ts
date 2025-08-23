@@ -3,21 +3,24 @@
  * Clean, focused service for interacting with Google's Generative AI API
  */
 
-import { GoogleGenerativeAI, GenerativeModel } from "@google/generative-ai";
-import { PROMPT_TEMPLATES, generateCustomPrompt } from "./prompts";
+import {
+  type GenerativeModel,
+  GoogleGenerativeAI,
+} from "@google/generative-ai";
+import { logger } from "@/lib/logger";
 import { createGeminiError, GeminiGenerationError } from "./errors";
-import { 
-  geminiChallengeResponseSchema, 
-  DEFAULT_GEMINI_CONFIG,
-  type GeminiChallengeResponse,
+import { generateCustomPrompt, PROMPT_TEMPLATES } from "./prompts";
+import {
   type ChallengeGenerationOptions,
   type ChallengeGenerationResult,
+  DEFAULT_GEMINI_CONFIG,
+  type GeminiChallengeResponse,
   type GeminiServiceStats,
-  type ServiceHealth,
+  geminiChallengeResponseSchema,
   type HealthCheck,
+  type ServiceHealth,
 } from "./types";
 import { validateOrThrow } from "./validator";
-import { logger } from "@/lib/logger";
 
 /**
  * Main service class for Gemini AI challenge generation
@@ -35,16 +38,16 @@ export class GeminiChallengeService {
 
   /**
    * Initialize the Gemini service with API configuration
-   * 
+   *
    * @param apiKey - Google AI API key
    * @param modelName - Gemini model to use (default: gemini-1.5-flash)
    */
   constructor(
     private readonly apiKey: string,
-    private readonly modelName: string = "gemini-1.5-flash"
+    private readonly modelName: string = "gemini-1.5-flash",
   ) {
     const genAI = new GoogleGenerativeAI(apiKey);
-    this.model = genAI.getGenerativeModel({ 
+    this.model = genAI.getGenerativeModel({
       model: modelName,
       generationConfig: DEFAULT_GEMINI_CONFIG,
     });
@@ -54,12 +57,14 @@ export class GeminiChallengeService {
 
   /**
    * Generate a code challenge using Gemini AI
-   * 
+   *
    * @param options - Generation options including difficulty and customizations
    * @returns Promise resolving to generated challenge data
    * @throws GeminiGenerationError on failure
    */
-  async generateChallenge(options: ChallengeGenerationOptions): Promise<ChallengeGenerationResult> {
+  async generateChallenge(
+    options: ChallengeGenerationOptions,
+  ): Promise<ChallengeGenerationResult> {
     const startTime = Date.now();
     this.stats.totalRequests++;
 
@@ -67,13 +72,14 @@ export class GeminiChallengeService {
       logger.debug("Generating challenge", { difficulty: options.difficulty });
 
       // Generate the prompt
-      const prompt = options.customContext || options.additionalRequirements?.length
-        ? generateCustomPrompt(options.difficulty, {
-            context: options.customContext,
-            language: options.language,
-            customRequirements: options.additionalRequirements,
-          })
-        : PROMPT_TEMPLATES[options.difficulty];
+      const prompt =
+        options.customContext || options.additionalRequirements?.length
+          ? generateCustomPrompt(options.difficulty, {
+              context: options.customContext,
+              language: options.language,
+              customRequirements: options.additionalRequirements,
+            })
+          : PROMPT_TEMPLATES[options.difficulty];
 
       // Make the API request
       const result = await this.makeRequest(prompt, options.config?.timeout);
@@ -103,11 +109,10 @@ export class GeminiChallengeService {
           // Token count would be available if Gemini provides it
         },
       };
-
     } catch (error) {
       const generationTime = Date.now() - startTime;
       this.updateStats(generationTime, false);
-      
+
       // Re-throw if already a GeminiGenerationError
       if (error instanceof GeminiGenerationError) {
         this.stats.lastError = error.message;
@@ -118,14 +123,17 @@ export class GeminiChallengeService {
       // Convert other errors to GeminiGenerationError
       const geminiError = this.handleUnknownError(error);
       this.stats.lastError = geminiError.message;
-      logger.error("Unexpected error in Gemini generation", geminiError.toObject());
+      logger.error(
+        "Unexpected error in Gemini generation",
+        geminiError.toObject(),
+      );
       throw geminiError;
     }
   }
 
   /**
    * Check the health status of the Gemini service
-   * 
+   *
    * @returns Health check result with service status
    */
   async healthCheck(): Promise<HealthCheck> {
@@ -144,7 +152,9 @@ export class GeminiChallengeService {
         await this.makeRequest("Test", 5000); // 5 second timeout
         canMakeRequests = true;
       } catch (error) {
-        errors.push(`Cannot make API requests: ${error instanceof Error ? error.message : "Unknown error"}`);
+        errors.push(
+          `Cannot make API requests: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
       }
     }
 
@@ -173,7 +183,7 @@ export class GeminiChallengeService {
 
   /**
    * Get service usage statistics
-   * 
+   *
    * @returns Current service statistics
    */
   getStats(): GeminiServiceStats {
@@ -197,7 +207,10 @@ export class GeminiChallengeService {
   /**
    * Make a request to the Gemini API with timeout handling
    */
-  private async makeRequest(prompt: string, timeoutMs: number = DEFAULT_GEMINI_CONFIG.timeout!) {
+  private async makeRequest(
+    prompt: string,
+    timeoutMs: number = DEFAULT_GEMINI_CONFIG.timeout!,
+  ) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -222,18 +235,22 @@ export class GeminiChallengeService {
   private parseResponse(text: string): GeminiChallengeResponse {
     try {
       // Handle markdown code blocks if present
-      const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || 
-                       text.match(/```\n([\s\S]*?)\n```/);
+      const jsonMatch =
+        text.match(/```json\n([\s\S]*?)\n```/) ||
+        text.match(/```\n([\s\S]*?)\n```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : text;
 
       // Clean up any extra whitespace or formatting
       const cleanedJsonStr = jsonStr.trim();
-      
+
       const parsed = JSON.parse(cleanedJsonStr);
       return geminiChallengeResponseSchema.parse(parsed);
     } catch (error) {
-      logger.debug("Failed to parse Gemini response", { response: text, error });
-      
+      logger.debug("Failed to parse Gemini response", {
+        response: text,
+        error,
+      });
+
       if (error instanceof Error) {
         throw createGeminiError.invalidResponse(text, error);
       }
@@ -250,8 +267,11 @@ export class GeminiChallengeService {
       if (error.message.includes("quota") || error.message.includes("rate")) {
         return createGeminiError.rateLimit();
       }
-      
-      if (error.message.includes("network") || error.message.includes("fetch")) {
+
+      if (
+        error.message.includes("network") ||
+        error.message.includes("fetch")
+      ) {
         return createGeminiError.network(error);
       }
 
@@ -272,7 +292,11 @@ export class GeminiChallengeService {
     }
 
     // Update average response time
-    const totalTime = this.stats.averageResponseTime * (this.stats.totalRequests - 1) + responseTime;
-    this.stats.averageResponseTime = Math.round(totalTime / this.stats.totalRequests);
+    const totalTime =
+      this.stats.averageResponseTime * (this.stats.totalRequests - 1) +
+      responseTime;
+    this.stats.averageResponseTime = Math.round(
+      totalTime / this.stats.totalRequests,
+    );
   }
 }

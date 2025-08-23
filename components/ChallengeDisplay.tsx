@@ -34,11 +34,9 @@ export function ChallengeDisplay({ challenge }: ChallengeDisplayProps) {
       <h2 className="text-lg font-bold text-foreground mb-2">
         Today's Challenge
       </h2>
-      <p className="text-foreground font-semibold">
-        {challenge.title}
-      </p>
+      <p className="text-foreground font-semibold">{challenge.title}</p>
       <div className="mt-2">
-        <span 
+        <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getDifficultyStyle(challenge.difficulty)}`}
         >
           {challenge.difficulty}

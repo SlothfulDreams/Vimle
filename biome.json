@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.3/schema.json",
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "formatter": {
     "indentWidth": 2,
     "indentStyle": "space"
@@ -8,6 +8,9 @@
     "enabled": true,
     "rules": {
       "recommended": true
+    },
+    "domains": {
+      "react": "recommended"
     }
   },
   "assist": {
@@ -19,11 +22,31 @@
     }
   },
   "files": {
-    "includes": ["!dist/**", "!*.js", "!*.cjs", "!*.mjs", "!*.spec.ts"]
+    "includes": [
+      "**",
+      "!*.cjs",
+      "!*.js",
+      "!*.mjs",
+      "!*.spec.ts",
+      "!**/*.ts.build-*.mjs",
+      "!dist/*",
+      "!node_modules/*",
+      "!**/.DS_Store"
+    ]
   },
   "vcs": {
     "enabled": true,
     "clientKind": "git",
     "useIgnoreFile": true
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {}
+        }
+      }
+    }
+  ]
 }

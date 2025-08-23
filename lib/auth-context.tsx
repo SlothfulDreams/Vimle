@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import type { User, Session } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
+import type { Session, User } from "@supabase/supabase-js";
+import type React from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { logger } from "./logger";
+import { supabase } from "./supabase";
 
 /**
  * Authentication context interface
@@ -29,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 /**
  * Authentication provider component
  * Manages user authentication state and provides auth methods to children
- * 
+ *
  * @param props - Component props
  * @param props.children - Child components that need access to auth context
  */
@@ -139,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 /**
  * Custom hook to access authentication context
  * Must be used within an AuthProvider component tree
- * 
+ *
  * @returns AuthContextType object with user, session, and auth methods
  * @throws Error if used outside of AuthProvider
  */

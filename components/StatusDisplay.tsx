@@ -14,7 +14,11 @@ interface StatusDisplayProps {
  * Component for displaying submission status and errors
  * Handles loading states and error messages with user-friendly UI
  */
-export function StatusDisplay({ isSubmitting, error, onClearError }: StatusDisplayProps) {
+export function StatusDisplay({
+  isSubmitting,
+  error,
+  onClearError,
+}: StatusDisplayProps) {
   if (isSubmitting) {
     return (
       <div className="text-center text-sm text-blue-600">
@@ -32,7 +36,7 @@ export function StatusDisplay({ isSubmitting, error, onClearError }: StatusDispl
         <div className="text-red-800 font-medium">⚠️ Save Failed</div>
         <div className="text-red-600 mt-1">{error}</div>
         {onClearError && (
-          <button 
+          <button
             onClick={onClearError}
             className="mt-2 text-xs text-red-600 underline hover:text-red-800 transition-colors"
           >
