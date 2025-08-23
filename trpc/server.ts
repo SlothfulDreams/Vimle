@@ -1,11 +1,11 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { generateTodaysChallenge, type GenerationResult } from "@/lib/ai-generation";
-import { isGeminiEnabled } from "@/lib/ai-generation/config";
-import { challengeService, getTodaysDate } from "@/lib/challenge";
-import { logger } from "@/lib/logger";
-import { db, ensureChallenge, ensureUser } from "@/prisma/database";
-import type { DifficultyLevel } from "@/types";
+import { generateTodaysChallenge, type GenerationResult } from "../lib/ai-generation/index.js";
+import { isGeminiEnabled } from "../lib/ai-generation/config/index.js";
+import { challengeService, getTodaysDate } from "../lib/challenge/index.js";
+import { logger } from "../lib/logger.js";
+import { db, ensureChallenge, ensureUser } from "../prisma/database.js";
+import type { DifficultyLevel } from "../types/index.js";
 
 /**
  * Zod validation schemas for tRPC procedures
