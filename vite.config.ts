@@ -27,17 +27,27 @@ export default defineConfig({
     tailwindcss(),
   ],
 
-  build: {
-    target: "es2022",
-    rollupOptions: {
-      external: ["@prisma/client", ".prisma/client"],
-    },
+build: {
+  target: "es2022",
+  rollupOptions: {
+    external: [
+      "@prisma/client",
+      ".prisma/client",
+      "../lib/generated/prisma",
+      "../lib/generated/prisma/client",
+    ],
   },
+},
 
-  ssr: {
-    external: ["@prisma/client", ".prisma/client", ".prisma/client/default"],
-    noExternal: [],
-  },
+ssr: {
+  external: [
+    "@prisma/client",
+    ".prisma/client",
+    "../lib/generated/prisma",
+    "../lib/generated/prisma/client",
+  ],
+  noExternal: [],
+},
 
 
   resolve: {
