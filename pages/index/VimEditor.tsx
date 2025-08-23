@@ -175,17 +175,15 @@ export function VimEditor({
   );
 
   return (
-    <div
-      className="w-[480px] relative overflow-visible"
-      onKeyDown={handleKeyDown}
-      onContextMenu={handleContextMenu}
-    >
+    <div className="w-[480px] relative overflow-visible">
       <CodeMirror
         ref={editorRef}
         value={initialContent || (readonly ? SAMPLE_CODE : "")}
         height={EDITOR_CONFIG.height}
         extensions={extensions}
         onChange={handleContentChange}
+        onKeyDown={handleKeyDown}
+        onContextMenu={handleContextMenu}
         theme={oneDark}
         basicSetup={{
           lineNumbers: true,
