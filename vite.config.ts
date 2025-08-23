@@ -1,4 +1,3 @@
-import vercel from "vite-plugin-vercel";
 
 import devServer from "@hono/vite-dev-server";
 import tailwindcss from "@tailwindcss/vite";
@@ -26,7 +25,6 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    vercel(),
   ],
 
   build: {
@@ -41,18 +39,6 @@ export default defineConfig({
     noExternal: [],
   },
 
-  vercel: {
-    additionalEndpoints: [
-      {
-        // entry file to the server. Default export must be a node server or a function
-        source: "hono-entry.ts",
-        // replaces default Vike target
-        destination: "ssr_",
-        // already added by default Vike route
-        route: false,
-      },
-    ],
-  },
 
   resolve: {
     alias: {

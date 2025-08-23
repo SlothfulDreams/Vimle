@@ -1,7 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/((?!assets/).*)",
+      "source": "/api/trpc/(.*)",
+      "destination": "/api/trpc.js"
+    },
+    {
+      "source": "/((?!api|assets/).*)",
       "destination": "/api/ssr.js"
     }
   ]
