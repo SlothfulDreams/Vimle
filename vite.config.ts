@@ -33,18 +33,18 @@ export default defineConfig({
     target: "es2022",
   },
 
-  // vercel: {
-  //   additionalEndpoints: [
-  //     {
-  //       // entry file to the server. Default export must be a node server or a function
-  //       source: "hono-entry.ts",
-  //       // replaces default Vike target
-  //       destination: "ssr_",
-  //       // already added by default Vike route
-  //       route: false,
-  //     },
-  //   ],
-  // },
+  vercel: {
+    additionalEndpoints: [
+      {
+        // entry file to the server. Default export must be a node server or a function
+        source: "hono-entry.ts",
+        // replaces default Vike target
+        destination: "ssr_",
+        // already added by default Vike route
+        route: false,
+      },
+    ],
+  },
 
   resolve: {
     alias: {
