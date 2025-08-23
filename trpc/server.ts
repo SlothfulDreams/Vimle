@@ -1,6 +1,6 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { generateTodaysChallenge } from "@/lib/ai-generation";
+import { generateTodaysChallenge, type GenerationResult } from "@/lib/ai-generation";
 import { isGeminiEnabled } from "@/lib/ai-generation/config";
 import { challengeService, getTodaysDate } from "@/lib/challenge";
 import { logger } from "@/lib/logger";
@@ -197,7 +197,7 @@ export const appRouter = router({
           },
         });
 
-        let generationResult;
+        let generationResult: GenerationResult;
 
         if (input.forceAI && isGeminiEnabled()) {
           // Force AI generation
