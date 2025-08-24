@@ -47,7 +47,7 @@ function saveAttempts(attempts: LocalChallengeAttempt[]): void {
  * Get user's attempt for a specific date
  */
 export function getLocalAttemptForDate(
-  date: string
+  date: string,
 ): LocalChallengeAttempt | null {
   const attempts = getStoredAttempts();
   return attempts.find((attempt) => attempt.challengeDate === date) || null;
@@ -75,13 +75,13 @@ export function saveLocalCompletion(
   challengeId: string,
   challengeDate: string,
   timeMs: number,
-  difficulty: string
+  difficulty: string,
 ): void {
   const attempts = getStoredAttempts();
 
   // Check if already completed this date (prevent duplicates)
   const existingIndex = attempts.findIndex(
-    (attempt) => attempt.challengeDate === challengeDate
+    (attempt) => attempt.challengeDate === challengeDate,
   );
 
   const newAttempt: LocalChallengeAttempt = {
@@ -106,7 +106,7 @@ export function saveLocalCompletion(
   const cutoffDate = thirtyDaysAgo.toISOString().split("T")[0];
 
   const filteredAttempts = attempts.filter(
-    (attempt) => attempt.challengeDate >= cutoffDate
+    (attempt) => attempt.challengeDate >= cutoffDate,
   );
 
   saveAttempts(filteredAttempts);
@@ -138,24 +138,24 @@ export function getLocalStats() {
 
   const totalTime = completedAttempts.reduce(
     (sum, attempt) => sum + attempt.timeMs,
-    0
+    0,
   );
   const averageTime = totalTime / completedAttempts.length;
   const bestTime = Math.min(
-    ...completedAttempts.map((attempt) => attempt.timeMs)
+    ...completedAttempts.map((attempt) => attempt.timeMs),
   );
 
   // Calculate current streak
   let currentStreak = 0;
   const sortedAttempts = [...completedAttempts].sort((a, b) =>
-    b.challengeDate.localeCompare(a.challengeDate)
+    b.challengeDate.localeCompare(a.challengeDate),
   );
 
   let currentDate = new Date();
   for (const attempt of sortedAttempts) {
     const attemptDate = new Date(attempt.challengeDate);
     const daysDiff = Math.floor(
-      (currentDate.getTime() - attemptDate.getTime()) / (1000 * 60 * 60 * 24)
+      (currentDate.getTime() - attemptDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (daysDiff === currentStreak) {

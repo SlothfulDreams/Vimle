@@ -4,19 +4,21 @@ import type { ChallengeUIState } from "@/types";
 
 /**
  * Custom hook for handling challenge completion logic
- * Manages content comparison, submission state, and user interaction tracking
+ * Manages content comparison, submission state, and completion detection
  *
  * @param leftContent - Content from the user's editor
  * @param rightContent - Target content to match
- * @param hasUserInteracted - Whether user has started interacting with editor
- * @param isTimerRunning - Current timer state
+ * @param timer - Timer state object from parent component
  * @returns Completion state and handler functions
  */
 export function useCompletionHandler(
   leftContent: string,
   rightContent: string,
-  hasUserInteracted: boolean,
-  isTimerRunning: boolean
+  timer: {
+    isRunning: boolean;
+    elapsedTime: number;
+    stopTimer: () => number;
+  },
 ) {
   const { canAttempt, submitCompletion } = useChallenge();
 
@@ -36,7 +38,7 @@ export function useCompletionHandler(
       left: leftContent.replace(/\s/g, ""),
       right: rightContent.replace(/\s/g, ""),
     }),
-    [leftContent, rightContent]
+    [leftContent, rightContent],
   );
 
   /**
@@ -56,21 +58,20 @@ export function useCompletionHandler(
 
   /**
    * Determines if challenge completion should be triggered
+   * Uses timer.isRunning as proxy for user interaction to simplify logic
    */
   const shouldComplete = useMemo(
     () =>
-      hasUserInteracted &&
-      isTimerRunning &&
+      timer.isRunning &&
       isContentMatching &&
       canAttempt &&
       !uiState.isSubmitting,
     [
-      hasUserInteracted,
-      isTimerRunning,
+      timer.isRunning,
       isContentMatching,
       canAttempt,
       uiState.isSubmitting,
-    ]
+    ],
   );
 
   /**
@@ -110,7 +111,7 @@ export function useCompletionHandler(
         }));
       }
     },
-    [shouldComplete, submitCompletion]
+    [shouldComplete, submitCompletion],
   );
 
   /**

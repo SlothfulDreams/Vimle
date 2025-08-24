@@ -18,7 +18,7 @@ import { Navbar } from "./Navbar";
  * Code splitting ensures TomorrowScreen is only loaded when needed
  */
 const TomorrowScreen = lazy(() =>
-  import("./TomorrowScreen").then((m) => ({ default: m.TomorrowScreen }))
+  import("./TomorrowScreen").then((m) => ({ default: m.TomorrowScreen })),
 );
 
 /**
@@ -112,6 +112,7 @@ export default function VimleGame() {
               canAttempt={canAttempt}
               isCompleted={isCompleted}
               resetTrigger={0} // TODO: Add reset functionality if needed
+              timer={timer}
               onUserInteraction={handleUserInteraction}
             />
           )}

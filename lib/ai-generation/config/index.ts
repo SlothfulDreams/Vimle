@@ -3,6 +3,14 @@
  * Environment variables and configuration for AI services
  */
 
+// Ensure environment variables are loaded before any config access
+import { config } from "dotenv";
+
+// Load environment variables early
+if (typeof window === "undefined") {
+  config();
+}
+
 import { logger } from "../../logger.js";
 
 /**
@@ -48,15 +56,29 @@ function validateConfig() {
   const geminiCfg = getGeminiConfig();
   const aiCfg = getAIConfig();
 
-  // Validate Gemini configuration
-  if (geminiCfg.enabled && !geminiCfg.apiKey) {
-    logger.warn(
-      "Gemini API key is not configured. AI challenge generation will be disabled.",
-      {
+  logger.info("🔧 Validating AI generation configuration...");
+
+  // Detailed API key validation
+  const geminiApiKey = geminiCfg.apiKey;
+  if (geminiCfg.enabled) {
+    if (geminiApiKey) {
+      logger.info("✅ Gemini API key found", {
+        keyLength: geminiApiKey.length,
+        keyPrefix: geminiApiKey.substring(0, 10) + "...",
+        model: geminiCfg.model,
+      });
+    } else {
+      logger.warn("❌ Gemini API key is not configured", {
         envVarsChecked: ["GEMINI_API_KEY", "GOOGLE_AI_API_KEY"],
+        geminiEnabled: geminiCfg.enabled,
         fallbackEnabled: aiCfg.enableFallback,
-      },
-    );
+        message: "AI challenge generation will be disabled - falling back to static challenges"
+      });
+    }
+  } else {
+    logger.info("⚠️ Gemini service is explicitly disabled", {
+      geminiEnabled: geminiCfg.enabled,
+    });
   }
 
   // Validate retry configuration
@@ -74,12 +96,22 @@ function validateConfig() {
     });
   }
 
-  logger.info("AI generation configuration loaded", {
+  const finalStatus = {
     geminiEnabled: geminiCfg.enabled && Boolean(geminiCfg.apiKey),
     model: geminiCfg.model,
     maxRetries: aiCfg.maxRetries,
     fallbackEnabled: aiCfg.enableFallback,
-  });
+  };
+
+  logger.info("🏁 AI generation configuration summary", finalStatus);
+
+  // Additional warning if no AI services will be available
+  if (!finalStatus.geminiEnabled) {
+    logger.warn("⚠️ No AI services will be available for challenge generation", {
+      reason: !geminiCfg.enabled ? "Service disabled" : "API key missing",
+      willUseFallback: finalStatus.fallbackEnabled,
+    });
+  }
 }
 
 /**

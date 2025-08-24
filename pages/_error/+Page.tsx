@@ -12,7 +12,7 @@ export default function AuthCallback() {
       if (!supabase || typeof window === "undefined") {
         console.error("Supabase client not available");
         navigate(
-          `/?error=${encodeURIComponent("Authentication service unavailable")}`
+          `/?error=${encodeURIComponent("Authentication service unavailable")}`,
         );
         return;
       }

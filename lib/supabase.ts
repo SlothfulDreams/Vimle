@@ -9,7 +9,7 @@ export const getSupabaseClient = () => {
     if (typeof window !== "undefined") {
       // Only throw on client-side where we need the client to work
       throw new Error(
-        "Missing Supabase environment variables. Please check your .env file."
+        "Missing Supabase environment variables. Please check your .env file.",
       );
     }
     // Return a mock client for SSR

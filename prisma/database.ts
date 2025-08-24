@@ -52,7 +52,7 @@ export async function ensureUser(
   userId: string,
   email?: string,
   name?: string,
-  retryCount = 0
+  retryCount = 0,
 ): Promise<any> {
   try {
     const user = await db.user.upsert({
@@ -77,7 +77,7 @@ export async function ensureUser(
       error.message.includes("prepared statement")
     ) {
       console.warn(
-        "🔄 Retrying user operation due to prepared statement conflict"
+        "🔄 Retrying user operation due to prepared statement conflict",
       );
       await new Promise((resolve) => setTimeout(resolve, 100)); // Brief delay
       return ensureUser(userId, email, name, 1);
@@ -98,7 +98,7 @@ export async function ensureChallenge(
   content: string,
   title: string,
   difficulty: string,
-  retryCount = 0
+  retryCount = 0,
 ): Promise<any> {
   try {
     const challenge = await db.challenge.upsert({
@@ -125,7 +125,7 @@ export async function ensureChallenge(
       error.message.includes("prepared statement")
     ) {
       console.warn(
-        "🔄 Retrying challenge operation due to prepared statement conflict"
+        "🔄 Retrying challenge operation due to prepared statement conflict",
       );
       await new Promise((resolve) => setTimeout(resolve, 100)); // Brief delay
       return ensureChallenge(
@@ -134,7 +134,7 @@ export async function ensureChallenge(
         content,
         title,
         difficulty,
-        1
+        1,
       );
     }
 

@@ -60,7 +60,7 @@ export class ChallengeService {
    * @returns Promise resolving to generated challenge
    */
   async generateTodaysChallenge(
-    options: Partial<ChallengeGenerationOptions> = {}
+    options: Partial<ChallengeGenerationOptions> = {},
   ): Promise<ChallengeGenerationResult> {
     const today = getTodaysDate();
     const difficulty =
@@ -75,33 +75,53 @@ export class ChallengeService {
       ...options,
     };
 
-    logger.info("Generating today's challenge", fullOptions);
+    logger.info("🏗️ Generating today's challenge", fullOptions);
+
+    // Check AI availability and preferences
+    const aiAvailable = isAIEnabled();
+    const shouldUseAI = this.config.preferAI && aiAvailable && !options.forceAI === false;
+
+    logger.info("📊 Challenge generation strategy", {
+      preferAI: this.config.preferAI,
+      aiAvailable,
+      shouldUseAI,
+      forceAI: options.forceAI,
+    });
 
     // If AI is preferred and available, try AI generation first
-    if (this.config.preferAI && isAIEnabled() && !options.forceAI === false) {
+    if (shouldUseAI) {
+      logger.info("🤖 Attempting AI challenge generation");
       try {
         const result = await this.generateAIChallenge(fullOptions);
-        logger.info("Successfully generated AI challenge", {
+        logger.info("✅ Successfully generated AI challenge", {
           challengeId: result.challenge.id,
           source: result.metadata.source,
+          title: result.challenge.title,
         });
         return result;
       } catch (error) {
-        logger.warn("AI challenge generation failed", {
+        logger.warn("❌ AI challenge generation failed", {
           error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
         });
 
         // Fall back to static if enabled
         if (fullOptions.allowFallback) {
-          logger.info("Falling back to static challenge");
+          logger.info("🔄 Falling back to static challenge", {
+            reason: "AI generation failed"
+          });
           return this.generateStaticChallenge(fullOptions);
         }
 
+        logger.error("💥 No fallback available - throwing error");
         throw error;
       }
     }
 
     // Use static challenge generation
+    logger.info("📚 Using static challenge generation", {
+      reason: !this.config.preferAI ? "AI not preferred" : "AI not available"
+    });
     return this.generateStaticChallenge(fullOptions);
   }
 
@@ -109,7 +129,7 @@ export class ChallengeService {
    * Generate a challenge using AI services
    */
   private async generateAIChallenge(
-    options: ChallengeGenerationOptions
+    options: ChallengeGenerationOptions,
   ): Promise<ChallengeGenerationResult> {
     const startTime = Date.now();
 
@@ -145,7 +165,7 @@ export class ChallengeService {
    * Generate a challenge using static pool
    */
   private generateStaticChallenge(
-    options: ChallengeGenerationOptions
+    options: ChallengeGenerationOptions,
   ): ChallengeGenerationResult {
     const { date, difficulty } = options;
 
@@ -202,7 +222,7 @@ export class ChallengeService {
     const vimScore = this.calculateVimPracticeScore(challenge.content);
     if (vimScore < 0.3) {
       warnings.push(
-        "Challenge may not provide good vim practice opportunities"
+        "Challenge may not provide good vim practice opportunities",
       );
     }
 
@@ -322,7 +342,7 @@ export function getTodaysDate(): string {
  */
 export function getDifficultyForDate(
   date: string,
-  weights = DEFAULT_CONFIG.difficultyWeights
+  weights = DEFAULT_CONFIG.difficultyWeights,
 ): "easy" | "medium" | "hard" {
   const hash = hashString(date);
   const random = (hash % 1000) / 1000; // Normalize to 0-1

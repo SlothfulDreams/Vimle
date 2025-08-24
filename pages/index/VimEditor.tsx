@@ -56,7 +56,7 @@ export function VimEditor({
 
       onContentChange?.(value);
     },
-    [onContentChange, onUserInteraction, readonly]
+    [onContentChange, onUserInteraction, readonly],
   );
 
   /**
@@ -158,7 +158,7 @@ export function VimEditor({
         }
       }
     },
-    [readonly]
+    [readonly],
   );
 
   /**
@@ -171,7 +171,7 @@ export function VimEditor({
         event.preventDefault();
       }
     },
-    [readonly]
+    [readonly],
   );
 
   return (

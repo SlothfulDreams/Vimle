@@ -43,7 +43,7 @@ export function TomorrowScreen({
       const msUntilTomorrow = tomorrow.getTime() - now.getTime();
       const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
       const minutes = Math.floor(
-        (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+        (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60),
       );
 
       setTimeUntilNext(`${hours}h ${minutes}m`);
@@ -82,7 +82,7 @@ export function TomorrowScreen({
               variant="outline"
               className={cn(
                 "text-xs font-medium capitalize",
-                getDifficultyColor(difficulty)
+                getDifficultyColor(difficulty),
               )}
             >
               {difficulty}

@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useCompletionHandler } from "@/hooks/useCompletionHandler";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useTimer } from "@/hooks/useTimer";
 import { VimEditor } from "@/pages/index/VimEditor";
-import type { DailyChallenge, VimMotion } from "@/types";
+import type { DailyChallenge, TimerState, VimMotion } from "@/types";
 
 /**
  * Props for the EditorContainer component
@@ -17,6 +16,14 @@ interface EditorContainerProps {
   isCompleted: boolean;
   /** Reset trigger for clearing editor content */
   resetTrigger: number;
+  /** Timer state from parent component */
+  timer: {
+    isRunning: boolean;
+    elapsedTime: number;
+    startTimer: () => void;
+    stopTimer: () => number;
+    resetTimer: () => void;
+  };
   /** Callback when user first interacts with editor */
   onUserInteraction?: () => void;
 }
@@ -30,6 +37,7 @@ export function EditorContainer({
   canAttempt,
   isCompleted,
   resetTrigger,
+  timer,
   onUserInteraction,
 }: EditorContainerProps) {
   // Editor content state
@@ -38,53 +46,35 @@ export function EditorContainer({
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Timer management
-  const timer = useTimer();
+  // Timer is now passed from parent component
 
   // Completion handling
   const completion = useCompletionHandler(
     leftEditorContent,
     rightEditorContent,
-    hasUserInteracted,
-    timer.isRunning
+    timer,
   );
 
   /**
-   * Initialize right editor with challenge content
+   * Initialize right editor content and mark initialization complete
    */
   useEffect(() => {
-    if (todaysChallenge && !rightEditorContent) {
+    if (todaysChallenge) {
       setRightEditorContent(todaysChallenge.content);
+      setIsInitialized(true); // Initialize immediately since we have challenge data
     }
-  }, [todaysChallenge, rightEditorContent]);
-
-  /**
-   * Mark initialization complete when both editors have content
-   */
-  useEffect(() => {
-    if (
-      leftEditorContent !== undefined &&
-      rightEditorContent !== undefined &&
-      !isInitialized
-    ) {
-      setIsInitialized(true);
-    }
-  }, [leftEditorContent, rightEditorContent, isInitialized]);
+  }, [todaysChallenge]);
 
   /**
    * Handle user's first interaction with the editor
+   * Timer management is handled by parent component
    */
   const handleUserInteraction = useCallback(() => {
     if (isInitialized && !hasUserInteracted) {
       setHasUserInteracted(true);
-      onUserInteraction?.();
-
-      // Start timer on first interaction
-      if (!timer.isRunning) {
-        timer.startTimer();
-      }
+      onUserInteraction?.(); // This will start the timer in parent component
     }
-  }, [isInitialized, hasUserInteracted, timer, onUserInteraction]);
+  }, [isInitialized, hasUserInteracted, onUserInteraction]);
 
   /**
    * Handle vim motion capture from editor
@@ -98,7 +88,7 @@ export function EditorContainer({
         console.debug("Motion captured:", motion);
       }
     },
-    [handleUserInteraction]
+    [handleUserInteraction],
   );
 
   /**
@@ -116,10 +106,9 @@ export function EditorContainer({
     [
       leftEditorContent,
       rightEditorContent,
-      hasUserInteracted,
       timer.isRunning,
       completion.shouldComplete,
-    ]
+    ],
   );
 
   return (
@@ -141,7 +130,7 @@ export function EditorContainer({
       {/* Target Editor (Right) */}
       <VimEditor
         onMotionCapture={() => {}} // No motion capture for readonly editor
-        onContentChange={setRightEditorContent}
+        onContentChange={setRightEditorContent} // Track content changes for completion comparison
         resetTrigger={resetTrigger}
         readonly={true}
         initialContent={todaysChallenge.content}

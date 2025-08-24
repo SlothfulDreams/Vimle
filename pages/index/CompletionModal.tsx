@@ -29,14 +29,31 @@ export function CompletionModal({
   const [timeUntilNext, setTimeUntilNext] = useState("");
 
   // Fetch global statistics for this challenge
-  const globalStatsQuery = trpc.getGlobalChallengeStats.useQuery(
-    { challengeId },
-    { enabled: open }
-  );
+  const [globalStats, setGlobalStats] = useState<{
+    averageTime: number;
+    totalCompletions: number;
+  } | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  useEffect(() => {
+    if (open && challengeId) {
+      setStatsLoading(true);
+      trpc.getGlobalChallengeStats
+        .query({ challengeId })
+        .then((data) => {
+          setGlobalStats(data);
+          setStatsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch global stats:", error);
+          setStatsLoading(false);
+        });
+    }
+  }, [open, challengeId]);
 
   const userTimeSeconds = (userTimeMs / 1000).toFixed(2);
-  const globalAvgSeconds = globalStatsQuery.data
-    ? (globalStatsQuery.data.averageTime / 1000).toFixed(2)
+  const globalAvgSeconds = globalStats
+    ? (globalStats.averageTime / 1000).toFixed(2)
     : null;
 
   const getDifficultyColor = (diff: string) => {
@@ -68,7 +85,7 @@ export function CompletionModal({
       const msUntilTomorrow = tomorrow.getTime() - now.getTime();
       const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
       const minutes = Math.floor(
-        (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+        (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60),
       );
 
       setTimeUntilNext(`${hours}h ${minutes}m`);
@@ -98,7 +115,7 @@ export function CompletionModal({
               variant="outline"
               className={cn(
                 "text-xs font-medium capitalize",
-                getDifficultyColor(difficulty)
+                getDifficultyColor(difficulty),
               )}
             >
               {difficulty}
@@ -113,7 +130,7 @@ export function CompletionModal({
                 "text-center p-4 rounded-lg border-2 transition-colors bg-muted/30",
                 beatAverage
                   ? "border-green-500 bg-green-500/10"
-                  : "border-border"
+                  : "border-border",
               )}
             >
               <div className="text-sm text-muted-foreground mb-1">
@@ -130,7 +147,7 @@ export function CompletionModal({
             {/* Average Time */}
             <div className="text-center p-4 rounded-lg bg-muted/30 border-2 border-border">
               <div className="text-sm text-muted-foreground mb-1">Avg Time</div>
-              {globalStatsQuery.isLoading ? (
+              {statsLoading ? (
                 <div className="text-2xl font-mono font-bold animate-pulse">
                   --
                 </div>
@@ -145,24 +162,21 @@ export function CompletionModal({
           </div>
 
           {/* Statistics Summary */}
-          {globalStatsQuery.data &&
-            globalStatsQuery.data.totalCompletions > 0 && (
-              <div className="text-center text-sm text-muted-foreground">
-                <p>
-                  {beatAverage
-                    ? `You're faster than ${Math.round(
-                        ((globalStatsQuery.data.totalCompletions - 1) /
-                          globalStatsQuery.data.totalCompletions) *
-                          100
-                      )}% of players!`
-                    : `Completed by ${globalStatsQuery.data.totalCompletions} ${
-                        globalStatsQuery.data.totalCompletions === 1
-                          ? "player"
-                          : "players"
-                      } today`}
-                </p>
-              </div>
-            )}
+          {globalStats && globalStats.totalCompletions > 0 && (
+            <div className="text-center text-sm text-muted-foreground">
+              <p>
+                {beatAverage
+                  ? `You're faster than ${Math.round(
+                      ((globalStats.totalCompletions - 1) /
+                        globalStats.totalCompletions) *
+                        100,
+                    )}% of players!`
+                  : `Completed by ${globalStats.totalCompletions} ${
+                      globalStats.totalCompletions === 1 ? "player" : "players"
+                    } today`}
+              </p>
+            </div>
+          )}
 
           {/* Next Challenge Countdown */}
           <div className="text-center space-y-2 pt-4 border-t">

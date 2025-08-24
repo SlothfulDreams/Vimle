@@ -80,7 +80,7 @@ async function getGeminiService(): Promise<GeminiChallengeService> {
  * Falls back to static challenges if AI generation fails
  */
 export async function generateTodaysChallenge(
-  options?: Partial<GenerationOptions>
+  options?: Partial<GenerationOptions>,
 ): Promise<GenerationResult> {
   const {
     date = getTodaysDate(),
@@ -88,13 +88,18 @@ export async function generateTodaysChallenge(
     retries = getAIConfig().maxRetries,
   } = options || {};
 
-  logger.info("Starting challenge generation", { date, difficulty, retries });
+  logger.info("🎯 Starting challenge generation", { date, difficulty, retries });
 
   // If no AI services are enabled, use static fallback immediately
   if (!isGeminiEnabled()) {
-    logger.info("No AI services enabled, using static fallback");
+    logger.warn("⚠️ No AI services enabled, using static fallback immediately", {
+      geminiEnabled: isGeminiEnabled(),
+      reason: "API key missing or service disabled"
+    });
     return generateStaticFallback(date, difficulty);
   }
+
+  logger.info("✅ AI services available, attempting AI generation");
 
   // Try AI generation with retries
   try {
@@ -104,28 +109,35 @@ export async function generateTodaysChallenge(
       retries,
     });
 
-    logger.info("Successfully generated AI challenge", {
+    logger.info("🎉 Successfully generated AI challenge", {
       date,
       difficulty,
       generatedBy: result.generatedBy,
       title: result.challenge.title,
+      generationTime: result.metadata?.generationTimeMs ? `${result.metadata.generationTimeMs}ms` : "unknown",
     });
 
     return result;
   } catch (error) {
-    logger.error("All AI generation attempts failed", {
+    logger.error("❌ All AI generation attempts failed", {
       date,
       difficulty,
       error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     // Fall back to static challenges if enabled
     if (getAIConfig().enableFallback) {
-      logger.info("Falling back to static challenge generation");
+      logger.info("🔄 Falling back to static challenge generation", {
+        reason: "AI generation failed after retries"
+      });
       return generateStaticFallback(date, difficulty);
     }
 
     // If fallback is disabled, re-throw the error
+    logger.error("💥 Fallback disabled - throwing error", {
+      fallbackEnabled: getAIConfig().enableFallback
+    });
     throw error;
   }
 }
@@ -134,16 +146,24 @@ export async function generateTodaysChallenge(
  * Generate challenge with retry logic
  */
 async function generateWithRetries(
-  options: GenerationOptions
+  options: GenerationOptions,
 ): Promise<GenerationResult> {
   const { date, difficulty, retries = getAIConfig().maxRetries } = options;
   let attemptCount = 0;
   let lastError: Error | null = null;
 
+  logger.info("🔄 Starting AI generation with retries", {
+    maxRetries: retries,
+    timeout: getAIConfig().requestTimeout,
+  });
+
   while (attemptCount <= retries) {
     try {
+      logger.debug(`🎲 Attempt ${attemptCount + 1}/${retries + 1}`, { date, difficulty });
+
       // Try Gemini service first (add other services here later)
       if (isGeminiEnabled()) {
+        logger.debug("🤖 Using Gemini service for generation");
         const service = await getGeminiService();
 
         const generationOptions: ChallengeGenerationOptions = {
@@ -216,7 +236,7 @@ async function generateWithRetries(
  */
 function generateStaticFallback(
   date: string,
-  difficulty: "easy" | "medium" | "hard"
+  difficulty: "easy" | "medium" | "hard",
 ): GenerationResult {
   // Generate deterministic index based on date
   const challengeIndex = hashString(date);
@@ -324,4 +344,17 @@ export async function getAIServicesHealth(): Promise<{
   }
 
   return { overall, services };
+}
+
+/**
+ * Simple hash function for deterministic randomness
+ */
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash);
 }

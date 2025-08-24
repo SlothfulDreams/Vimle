@@ -34,12 +34,16 @@ export function useTimer() {
    * @returns The final elapsed time in milliseconds
    */
   const stopTimer = useCallback(() => {
-    setTimerState((prev) => ({
-      ...prev,
-      isRunning: false,
-    }));
-    return timerState.elapsedTime;
-  }, [timerState.elapsedTime]);
+    let finalTime = 0;
+    setTimerState((prev) => {
+      finalTime = prev.elapsedTime; // Capture current elapsed time
+      return {
+        ...prev,
+        isRunning: false,
+      };
+    });
+    return finalTime;
+  }, []);
 
   /**
    * Resets the timer to initial state

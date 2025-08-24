@@ -1,8 +1,12 @@
+import { config } from "dotenv";
 import { vikeHandler } from "./server/vike-handler";
 import { trpcHandler } from "./server/trpc-handler";
 import { createHandler } from "@universal-middleware/hono";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
+
+// Load environment variables from .env file
+config();
 
 const app = new Hono();
 

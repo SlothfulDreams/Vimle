@@ -11,9 +11,15 @@ import { useEffect, useRef } from "react";
 export function useDebounce(
   callback: () => void,
   delay: number,
-  dependencies: React.DependencyList
+  dependencies: React.DependencyList,
 ) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const callbackRef = useRef(callback);
+
+  // Update callback ref without triggering effect
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
 
   useEffect(() => {
     // Clear previous timeout
@@ -21,8 +27,8 @@ export function useDebounce(
       clearTimeout(timeoutRef.current);
     }
 
-    // Set new debounced timeout
-    timeoutRef.current = setTimeout(callback, delay);
+    // Set new debounced timeout using the ref to avoid dependency issues
+    timeoutRef.current = setTimeout(() => callbackRef.current(), delay);
 
     // Cleanup on unmount or dependency change
     return () => {
@@ -30,7 +36,7 @@ export function useDebounce(
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [callback, delay, ...dependencies]);
+  }, [delay, ...dependencies]); // Removed callback from dependency array
 
   // Cleanup on unmount
   useEffect(() => {

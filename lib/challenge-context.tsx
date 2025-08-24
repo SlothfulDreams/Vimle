@@ -9,8 +9,6 @@ import {
 import type { DailyChallenge } from "@/types";
 import { useAuth } from "./auth-context.js";
 import {
-  clearLocalData,
-  getAllLocalAttempts,
   getTodaysLocalAttempt,
   saveLocalCompletion,
 } from "./local-storage.js";
@@ -46,13 +44,13 @@ interface ChallengeContextType {
 }
 
 const ChallengeContext = createContext<ChallengeContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState<DailyChallenge | null>(
-    null
+    null,
   );
   const [userAttempt, setUserAttempt] = useState<ChallengeAttempt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +64,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // TODO: Load from API or static data
     const mockChallenge: DailyChallenge = {
-      id: "daily-" + new Date().toISOString().split("T")[0],
+      id: `daily-${new Date().toISOString().split("T")[0]}`,
       date: new Date().toISOString().split("T")[0],
       title: "Sample Challenge",
       content: `function fibonacci(n) {
@@ -113,7 +111,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const attemptLoading = !localAttemptLoaded;
     setLoading(!todaysChallenge || attemptLoading);
-  }, [todaysChallenge, user, localAttemptLoaded]);
+  }, [todaysChallenge, localAttemptLoaded]);
 
   // Check if user has completed today's challenge (define before useEffect that uses it)
   const isCompleted = userAttempt?.completedAt != null;
@@ -157,7 +155,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
           todaysChallenge.id,
           todaysChallenge.date,
           timeMs,
-          todaysChallenge.difficulty
+          todaysChallenge.difficulty,
         );
         console.log("Challenge completed successfully (local)");
 
@@ -180,7 +178,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [todaysChallenge, canAttempt, user]
+    [todaysChallenge, canAttempt, user],
   );
 
   // Refresh challenge data (simplified for local storage)
@@ -197,6 +195,16 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   // Set completion modal visibility
   const setCompletionModal = useCallback((show: boolean) => {
     setShowCompletionModal(show);
+  }, []);
+
+  // Debug helper to force completion modal (remove in production)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as Window & { forceCompletionModal?: () => void }).forceCompletionModal = () => {
+        console.log("Forcing completion modal for testing...");
+        setShowCompletionModal(true);
+      };
+    }
   }, []);
 
   const value: ChallengeContextType = {

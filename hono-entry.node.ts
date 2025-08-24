@@ -1,9 +1,13 @@
+import { config } from "dotenv";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { type Context, Hono } from "hono";
 import { env } from "hono/adapter";
 import { compress } from "hono/compress";
 import app from "./hono-entry";
+
+// Load environment variables from .env file
+config();
 
 const envs = env<{ NODE_ENV?: string; PORT?: string }>({
   env: {},
@@ -19,7 +23,7 @@ nodeApp.use(
   "/*",
   serveStatic({
     root: `./dist/client/`,
-  })
+  }),
 );
 
 nodeApp.route("/", app as Hono);
