@@ -18,7 +18,7 @@ import { Navbar } from "./Navbar";
  * Code splitting ensures TomorrowScreen is only loaded when needed
  */
 const TomorrowScreen = lazy(() =>
-  import("./TomorrowScreen").then((m) => ({ default: m.TomorrowScreen })),
+  import("./TomorrowScreen").then((m) => ({ default: m.TomorrowScreen }))
 );
 
 /**

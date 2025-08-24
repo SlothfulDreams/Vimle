@@ -103,10 +103,12 @@ function createPrompt(difficulty: DifficultyLevel): string {
     difficulty === "easy"
       ? "simple"
       : difficulty === "medium"
-        ? "intermediate"
-        : "advanced";
+      ? "intermediate"
+      : "advanced";
 
-  return `Generate a ${difficultyText} Vim editing practice challenge${difficulty === "easy" ? " for beginners" : ""}:
+  return `Generate a ${difficultyText} Vim editing practice challenge${
+    difficulty === "easy" ? " for beginners" : ""
+  }:
 
 This should be an EDITING challenge where users start with incomplete/incorrect code and need to edit it to match the target.
 
@@ -160,14 +162,14 @@ export interface PromptOptions {
  */
 export function generateCustomPrompt(
   difficulty: DifficultyLevel,
-  options: PromptOptions = {},
+  options: PromptOptions = {}
 ): string {
   let basePrompt = PROMPT_TEMPLATES[difficulty];
 
   if (options.language) {
     basePrompt = basePrompt.replace(
       "JavaScript/TypeScript",
-      options.language === "javascript" ? "JavaScript" : "TypeScript",
+      options.language === "javascript" ? "JavaScript" : "TypeScript"
     );
   }
 
@@ -181,7 +183,7 @@ export function generateCustomPrompt(
       .join("\n");
     basePrompt = basePrompt.replace(
       "Return ONLY a JSON response",
-      `${additionalReqs}\n\nReturn ONLY a JSON response`,
+      `${additionalReqs}\n\nReturn ONLY a JSON response`
     );
   }
 

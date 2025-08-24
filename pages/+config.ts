@@ -1,6 +1,6 @@
 import type { Config } from "vike/types";
 import vikeReact from "vike-react/config";
-import Layout from "@/layouts/LayoutDefault.js";
+import Layout from "../layouts/LayoutDefault.js";
 
 // Default config (can be overridden by pages)
 // https://vike.dev/config
@@ -10,9 +10,9 @@ export default {
   Layout,
 
   // https://vike.dev/head-tags
-  title: "Vimle - Vim Motion Trainer",
+  title: "My Vike App",
 
-  description: "Level up your Vim motions: edit the left, match the right",
+  description: "Demo showcasing Vike",
   extends: vikeReact,
-  prerender: false,
+  prerender: true,
 } satisfies Config;

@@ -60,7 +60,7 @@ export class ChallengeService {
    * @returns Promise resolving to generated challenge
    */
   async generateTodaysChallenge(
-    options: Partial<ChallengeGenerationOptions> = {},
+    options: Partial<ChallengeGenerationOptions> = {}
   ): Promise<ChallengeGenerationResult> {
     const today = getTodaysDate();
     const difficulty =
@@ -109,7 +109,7 @@ export class ChallengeService {
    * Generate a challenge using AI services
    */
   private async generateAIChallenge(
-    options: ChallengeGenerationOptions,
+    options: ChallengeGenerationOptions
   ): Promise<ChallengeGenerationResult> {
     const startTime = Date.now();
 
@@ -145,7 +145,7 @@ export class ChallengeService {
    * Generate a challenge using static pool
    */
   private generateStaticChallenge(
-    options: ChallengeGenerationOptions,
+    options: ChallengeGenerationOptions
   ): ChallengeGenerationResult {
     const { date, difficulty } = options;
 
@@ -202,7 +202,7 @@ export class ChallengeService {
     const vimScore = this.calculateVimPracticeScore(challenge.content);
     if (vimScore < 0.3) {
       warnings.push(
-        "Challenge may not provide good vim practice opportunities",
+        "Challenge may not provide good vim practice opportunities"
       );
     }
 
@@ -322,7 +322,7 @@ export function getTodaysDate(): string {
  */
 export function getDifficultyForDate(
   date: string,
-  weights = DEFAULT_CONFIG.difficultyWeights,
+  weights = DEFAULT_CONFIG.difficultyWeights
 ): "easy" | "medium" | "hard" {
   const hash = hashString(date);
   const random = (hash % 1000) / 1000; // Normalize to 0-1
@@ -348,8 +348,6 @@ function hashString(str: string): number {
   }
   return Math.abs(hash);
 }
-
-
 
 // Export default service instance
 export const challengeService = new ChallengeService();

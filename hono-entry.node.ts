@@ -3,7 +3,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { type Context, Hono } from "hono";
 import { env } from "hono/adapter";
 import { compress } from "hono/compress";
-import app from "./hono-entry.js";
+import app from "./hono-entry";
 
 const envs = env<{ NODE_ENV?: string; PORT?: string }>({
   env: {},
@@ -19,7 +19,7 @@ nodeApp.use(
   "/*",
   serveStatic({
     root: `./dist/client/`,
-  }),
+  })
 );
 
 nodeApp.route("/", app as Hono);

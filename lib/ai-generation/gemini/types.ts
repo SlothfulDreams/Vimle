@@ -17,7 +17,7 @@ export const geminiChallengeResponseSchema = z.object({
     .max(1000, "Starting content must be less than 1000 characters")
     .refine(
       (val) => val.trim().length > 0,
-      "Starting content cannot be empty or only whitespace",
+      "Starting content cannot be empty or only whitespace"
     ),
 
   /** The target code that users need to achieve (correct version) */
@@ -27,7 +27,7 @@ export const geminiChallengeResponseSchema = z.object({
     .max(1000, "Content must be less than 1000 characters")
     .refine(
       (val) => val.trim().length > 0,
-      "Content cannot be empty or only whitespace",
+      "Content cannot be empty or only whitespace"
     ),
 
   /** Human-readable title for the challenge */
@@ -37,7 +37,7 @@ export const geminiChallengeResponseSchema = z.object({
     .max(100, "Title must be less than 100 characters")
     .refine(
       (val) => val.trim().length > 0,
-      "Title cannot be empty or only whitespace",
+      "Title cannot be empty or only whitespace"
     ),
 
   /** Optional explanation of what the editing challenge involves */

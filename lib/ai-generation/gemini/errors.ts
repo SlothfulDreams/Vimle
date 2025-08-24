@@ -33,7 +33,7 @@ export class GeminiGenerationError extends Error {
     message: string,
     public readonly code: GeminiErrorCode,
     public readonly retryable: boolean,
-    public readonly metadata?: Record<string, unknown>,
+    public readonly metadata?: Record<string, unknown>
   ) {
     super(message);
     this.name = "GeminiGenerationError";
@@ -71,7 +71,7 @@ export class GeminiGenerationError extends Error {
 export class GeminiRateLimitError extends GeminiGenerationError {
   constructor(
     message: string = "API rate limit exceeded",
-    public readonly retryAfter?: number, // Seconds to wait before retry
+    public readonly retryAfter?: number // Seconds to wait before retry
   ) {
     super(message, "RATE_LIMIT", true, { retryAfter });
   }
@@ -81,10 +81,7 @@ export class GeminiRateLimitError extends GeminiGenerationError {
  * Error for invalid JSON or response format from Gemini
  */
 export class GeminiResponseError extends GeminiGenerationError {
-  constructor(
-    message: string,
-    public readonly rawResponse?: string,
-  ) {
+  constructor(message: string, public readonly rawResponse?: string) {
     super(message, "INVALID_RESPONSE", true, { rawResponse });
   }
 }
@@ -93,10 +90,7 @@ export class GeminiResponseError extends GeminiGenerationError {
  * Error for content that fails validation
  */
 export class GeminiValidationError extends GeminiGenerationError {
-  constructor(
-    message: string,
-    public readonly validationDetails?: string[],
-  ) {
+  constructor(message: string, public readonly validationDetails?: string[]) {
     super(message, "VALIDATION_ERROR", true, { validationDetails });
   }
 }
@@ -110,8 +104,10 @@ export const createGeminiError = {
    */
   rateLimit: (retryAfter?: number): GeminiRateLimitError => {
     return new GeminiRateLimitError(
-      `API rate limit exceeded${retryAfter ? `. Retry after ${retryAfter} seconds` : ""}`,
-      retryAfter,
+      `API rate limit exceeded${
+        retryAfter ? `. Retry after ${retryAfter} seconds` : ""
+      }`,
+      retryAfter
     );
   },
 
@@ -120,11 +116,13 @@ export const createGeminiError = {
    */
   invalidResponse: (
     rawResponse: string,
-    parseError?: Error,
+    parseError?: Error
   ): GeminiResponseError => {
     return new GeminiResponseError(
-      `Invalid JSON response from Gemini${parseError ? `: ${parseError.message}` : ""}`,
-      rawResponse,
+      `Invalid JSON response from Gemini${
+        parseError ? `: ${parseError.message}` : ""
+      }`,
+      rawResponse
     );
   },
 
@@ -134,7 +132,7 @@ export const createGeminiError = {
   validation: (details: string[]): GeminiValidationError => {
     return new GeminiValidationError(
       `Generated content failed validation: ${details.join(", ")}`,
-      details,
+      details
     );
   },
 
@@ -143,7 +141,7 @@ export const createGeminiError = {
    */
   apiError: (
     message: string,
-    retryable: boolean = true,
+    retryable: boolean = true
   ): GeminiGenerationError => {
     return new GeminiGenerationError(message, "API_ERROR", retryable);
   },
@@ -155,7 +153,7 @@ export const createGeminiError = {
     return new GeminiGenerationError(
       "Gemini service is disabled. Check GEMINI_API_KEY configuration.",
       "DISABLED",
-      false,
+      false
     );
   },
 
@@ -167,7 +165,7 @@ export const createGeminiError = {
       `Network error: ${originalError.message}`,
       "NETWORK_ERROR",
       true,
-      { originalError: originalError.message },
+      { originalError: originalError.message }
     );
   },
 
@@ -179,7 +177,7 @@ export const createGeminiError = {
       `Request timed out after ${timeoutMs}ms`,
       "TIMEOUT_ERROR",
       true,
-      { timeoutMs },
+      { timeoutMs }
     );
   },
 };

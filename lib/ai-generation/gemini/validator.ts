@@ -63,7 +63,7 @@ const VALIDATION_RULES = {
  */
 export function validateGeneratedCode(
   content: string,
-  difficulty?: "easy" | "medium" | "hard",
+  difficulty?: "easy" | "medium" | "hard"
 ): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -71,13 +71,13 @@ export function validateGeneratedCode(
   // Basic length validation
   if (!content || content.trim().length < VALIDATION_RULES.minLength) {
     errors.push(
-      `Content must be at least ${VALIDATION_RULES.minLength} characters`,
+      `Content must be at least ${VALIDATION_RULES.minLength} characters`
     );
   }
 
   if (content.length > VALIDATION_RULES.maxLength) {
     errors.push(
-      `Content must be less than ${VALIDATION_RULES.maxLength} characters`,
+      `Content must be less than ${VALIDATION_RULES.maxLength} characters`
     );
   }
 
@@ -85,7 +85,7 @@ export function validateGeneratedCode(
   const lines = content.split("\n");
   if (lines.length > VALIDATION_RULES.maxLines) {
     errors.push(
-      `Content must have fewer than ${VALIDATION_RULES.maxLines} lines`,
+      `Content must have fewer than ${VALIDATION_RULES.maxLines} lines`
     );
   }
 
@@ -94,7 +94,7 @@ export function validateGeneratedCode(
     const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
     if (nonEmptyLines.length < VALIDATION_RULES.minLinesForComplex) {
       warnings.push(
-        `${difficulty} challenges should have at least ${VALIDATION_RULES.minLinesForComplex} lines of code`,
+        `${difficulty} challenges should have at least ${VALIDATION_RULES.minLinesForComplex} lines of code`
       );
     }
   }
@@ -109,12 +109,12 @@ export function validateGeneratedCode(
   // Structure validation - ensure it looks like valid code
   const hasValidStructure =
     VALIDATION_RULES.requiredPatterns.hasCodeStructure.some((pattern) =>
-      pattern.test(content),
+      pattern.test(content)
     );
 
   if (!hasValidStructure) {
     errors.push(
-      "Content doesn't appear to contain valid JavaScript/TypeScript code structures",
+      "Content doesn't appear to contain valid JavaScript/TypeScript code structures"
     );
   }
 
@@ -188,7 +188,7 @@ export function validateVimPracticeContent(content: string): ValidationResult {
   const charVariety = new Set(content.replace(/\s/g, "")).size;
   if (charVariety < 5) {
     warnings.push(
-      "Content has low character variety, may not provide good vim practice",
+      "Content has low character variety, may not provide good vim practice"
     );
   }
 
@@ -196,7 +196,7 @@ export function validateVimPracticeContent(content: string): ValidationResult {
   const hasIndentation = /^\s+/m.test(content);
   if (!hasIndentation) {
     warnings.push(
-      "Content lacks indentation, missing opportunity for vim practice",
+      "Content lacks indentation, missing opportunity for vim practice"
     );
   }
 
@@ -224,7 +224,7 @@ export function validateVimPracticeContent(content: string): ValidationResult {
 
   if (opportunityCount < 2) {
     warnings.push(
-      "Content may not provide enough variety for comprehensive vim practice",
+      "Content may not provide enough variety for comprehensive vim practice"
     );
   }
 
@@ -240,7 +240,7 @@ export function validateVimPracticeContent(content: string): ValidationResult {
  */
 export function comprehensiveValidation(
   content: string,
-  difficulty?: "easy" | "medium" | "hard",
+  difficulty?: "easy" | "medium" | "hard"
 ): ValidationResult {
   const codeValidation = validateGeneratedCode(content, difficulty);
   const vimValidation = validateVimPracticeContent(content);
@@ -257,7 +257,7 @@ export function comprehensiveValidation(
  */
 export function validateOrThrow(
   content: string,
-  difficulty?: "easy" | "medium" | "hard",
+  difficulty?: "easy" | "medium" | "hard"
 ): void {
   const result = comprehensiveValidation(content, difficulty);
 

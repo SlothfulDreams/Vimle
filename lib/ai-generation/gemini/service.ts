@@ -44,7 +44,7 @@ export class GeminiChallengeService {
    */
   constructor(
     private readonly apiKey: string,
-    private readonly modelName: string = "gemini-1.5-flash",
+    private readonly modelName: string = "gemini-1.5-flash"
   ) {
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({
@@ -63,7 +63,7 @@ export class GeminiChallengeService {
    * @throws GeminiGenerationError on failure
    */
   async generateChallenge(
-    options: ChallengeGenerationOptions,
+    options: ChallengeGenerationOptions
   ): Promise<ChallengeGenerationResult> {
     const startTime = Date.now();
     this.stats.totalRequests++;
@@ -125,7 +125,7 @@ export class GeminiChallengeService {
       this.stats.lastError = geminiError.message;
       logger.error(
         "Unexpected error in Gemini generation",
-        geminiError.toObject(),
+        geminiError.toObject()
       );
       throw geminiError;
     }
@@ -153,7 +153,9 @@ export class GeminiChallengeService {
         canMakeRequests = true;
       } catch (error) {
         errors.push(
-          `Cannot make API requests: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `Cannot make API requests: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
         );
       }
     }
@@ -209,7 +211,7 @@ export class GeminiChallengeService {
    */
   private async makeRequest(
     prompt: string,
-    timeoutMs: number = DEFAULT_GEMINI_CONFIG.timeout!,
+    timeoutMs: number = DEFAULT_GEMINI_CONFIG.timeout!
   ) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -296,7 +298,7 @@ export class GeminiChallengeService {
       this.stats.averageResponseTime * (this.stats.totalRequests - 1) +
       responseTime;
     this.stats.averageResponseTime = Math.round(
-      totalTime / this.stats.totalRequests,
+      totalTime / this.stats.totalRequests
     );
   }
 }

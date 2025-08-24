@@ -37,7 +37,9 @@ export function ChallengeDisplay({ challenge }: ChallengeDisplayProps) {
       <p className="text-foreground font-semibold">{challenge.title}</p>
       <div className="mt-2">
         <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getDifficultyStyle(challenge.difficulty)}`}
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getDifficultyStyle(
+            challenge.difficulty
+          )}`}
         >
           {challenge.difficulty}
         </span>

@@ -115,7 +115,7 @@ class Logger {
     contentMatch: (
       challengeId: string,
       leftLength: number,
-      rightLength: number,
+      rightLength: number
     ) => {
       this.debug("Content comparison", {
         challengeId,

@@ -6,7 +6,6 @@ import {
   useEffect,
   useState,
 } from "react";
-import { trpc } from "@/trpc/client";
 import type { DailyChallenge } from "@/types";
 import { useAuth } from "./auth-context.js";
 import {
@@ -47,13 +46,13 @@ interface ChallengeContextType {
 }
 
 const ChallengeContext = createContext<ChallengeContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [todaysChallenge, setTodaysChallenge] = useState<DailyChallenge | null>(
-    null,
+    null
   );
   const [userAttempt, setUserAttempt] = useState<ChallengeAttempt | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,48 +62,30 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [showTomorrowScreen, setShowTomorrowScreen] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  // tRPC queries
-  const todaysChallengeQuery = trpc.getTodaysChallenge.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-    staleTime: 60 * 60 * 1000, // 1 hour
-  });
-
-  const userAttemptQuery = trpc.getUserAttempt.useQuery(
-    { userId: user?.id || "anonymous" },
-    {
-      enabled: !!user?.id,
-      refetchOnWindowFocus: false,
-    },
-  );
-
-  const submitCompletionMutation = trpc.submitCompletion.useMutation();
-  const migrateLocalDataMutation = trpc.migrateLocalData.useMutation();
-
-  // Load today's challenge
+  // Load today's challenge (using static data for now)
   useEffect(() => {
-    if (todaysChallengeQuery.data) {
-      setTodaysChallenge(todaysChallengeQuery.data);
-    }
-  }, [todaysChallengeQuery.data]);
+    // TODO: Load from API or static data
+    const mockChallenge: DailyChallenge = {
+      id: "daily-" + new Date().toISOString().split("T")[0],
+      date: new Date().toISOString().split("T")[0],
+      title: "Sample Challenge",
+      content: `function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 1) + fibonacci(n - 2);
+}`,
+      difficulty: "medium",
+    };
+    setTodaysChallenge(mockChallenge);
+  }, []);
 
-  // Load user attempt (from database for authenticated users)
+  // Load user attempt (from local storage for now)
   useEffect(() => {
-    if (user?.id && userAttemptQuery.isSuccess) {
-      const data = (userAttemptQuery as any).data;
-      if (data) {
-        setUserAttempt(data);
-      }
-    }
-  }, [user?.id, userAttemptQuery.isSuccess, userAttemptQuery]);
-
-  // Load local attempt for anonymous users
-  useEffect(() => {
-    if (!user && typeof window !== "undefined" && !localAttemptLoaded) {
+    if (typeof window !== "undefined" && todaysChallenge) {
       const localAttempt = getTodaysLocalAttempt();
       if (localAttempt) {
         setUserAttempt({
           id: `local-${localAttempt.challengeDate}`,
-          userId: "anonymous",
+          userId: user?.id || "anonymous",
           challengeId: localAttempt.challengeId,
           completedAt: new Date(localAttempt.completedAt),
           timeMs: localAttempt.timeMs,
@@ -113,53 +94,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       }
       setLocalAttemptLoaded(true);
     }
-  }, [user, localAttemptLoaded]);
-
-  // Migrate localStorage data to database when user signs in
-  useEffect(() => {
-    const migrateDataOnSignIn = async () => {
-      if (user?.id && typeof window !== "undefined") {
-        const localAttempts = getAllLocalAttempts();
-
-        if (localAttempts.length > 0) {
-          try {
-            console.log(
-              `Migrating ${localAttempts.length} local attempts to database for user ${user.id}`,
-            );
-
-            const result = await migrateLocalDataMutation.mutateAsync({
-              userId: user.id,
-              localAttempts: localAttempts,
-            });
-
-            console.log("Migration completed:", result);
-
-            // Clear localStorage data after successful migration
-            if (result.success && result.migratedCount > 0) {
-              clearLocalData();
-              console.log("Local data cleared after successful migration");
-
-              // Refresh user attempt data to get the migrated data
-              userAttemptQuery.refetch();
-            }
-          } catch (error) {
-            console.error("Failed to migrate local data on sign in:", error);
-            // Don't clear localStorage if migration failed
-          }
-        }
-      }
-    };
-
-    // Only attempt migration once per session per user
-    if (user?.id && !localAttemptLoaded) {
-      migrateDataOnSignIn();
-    }
-  }, [
-    user?.id,
-    localAttemptLoaded,
-    migrateLocalDataMutation,
-    userAttemptQuery,
-  ]);
+  }, [todaysChallenge, user?.id]);
 
   // Check if tomorrow screen should be shown
   const getTomorrowScreenKey = useCallback(() => {
@@ -174,19 +109,11 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     return sessionStorage.getItem(tomorrowKey) === "true";
   }, [getTomorrowScreenKey]);
 
-  // Handle loading state first
+  // Handle loading state
   useEffect(() => {
-    const challengeLoading = todaysChallengeQuery.isLoading;
-    const attemptLoading = user
-      ? userAttemptQuery.isLoading
-      : !localAttemptLoaded;
-    setLoading(challengeLoading || attemptLoading);
-  }, [
-    todaysChallengeQuery.isLoading,
-    userAttemptQuery.isLoading,
-    user,
-    localAttemptLoaded,
-  ]);
+    const attemptLoading = !localAttemptLoaded;
+    setLoading(!todaysChallenge || attemptLoading);
+  }, [todaysChallenge, user, localAttemptLoaded]);
 
   // Check if user has completed today's challenge (define before useEffect that uses it)
   const isCompleted = userAttempt?.completedAt != null;
@@ -225,26 +152,14 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        // For authenticated users, submit to server
-        if (user) {
-          const result = await submitCompletionMutation.mutateAsync({
-            userId: user.id,
-            userEmail: user.email,
-            challengeId: todaysChallenge.id,
-            timeMs,
-            challengeDate: todaysChallenge.date,
-          });
-          console.log("Challenge completed successfully (server):", result);
-        } else {
-          // For anonymous users, save to local storage
-          saveLocalCompletion(
-            todaysChallenge.id,
-            todaysChallenge.date,
-            timeMs,
-            todaysChallenge.difficulty,
-          );
-          console.log("Challenge completed successfully (local)");
-        }
+        // Save to local storage for now (TODO: Add server submission)
+        saveLocalCompletion(
+          todaysChallenge.id,
+          todaysChallenge.date,
+          timeMs,
+          todaysChallenge.difficulty
+        );
+        console.log("Challenge completed successfully (local)");
 
         // Update local state to reflect completion
         const newAttempt = {
@@ -265,16 +180,14 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         throw error;
       }
     },
-    [todaysChallenge, canAttempt, user, submitCompletionMutation],
+    [todaysChallenge, canAttempt, user]
   );
 
-  // Refresh challenge data
+  // Refresh challenge data (simplified for local storage)
   const refreshChallenge = useCallback(async () => {
-    await Promise.all([
-      todaysChallengeQuery.refetch(),
-      user ? userAttemptQuery.refetch() : Promise.resolve(),
-    ]);
-  }, [todaysChallengeQuery, userAttemptQuery, user]);
+    // TODO: Add refresh logic when server endpoints are available
+    console.log("Refresh requested");
+  }, []);
 
   // Set tomorrow screen visibility
   const setTomorrowScreen = useCallback((show: boolean) => {

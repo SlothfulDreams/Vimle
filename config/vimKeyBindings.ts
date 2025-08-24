@@ -33,7 +33,7 @@ export const VIM_KEY_BINDINGS: readonly VimKeyBinding[] = [
  * @returns Array of key binding objects for CodeMirror
  */
 export function createVimKeyBindings(
-  onMotionCapture: (motion: VimMotion) => void,
+  onMotionCapture: (motion: VimMotion) => void
 ): Array<{ key: string; run: () => boolean }> {
   return VIM_KEY_BINDINGS.map(({ key, motion }) => ({
     key,

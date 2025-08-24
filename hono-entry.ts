@@ -1,8 +1,8 @@
+import { vikeHandler } from "./server/vike-handler";
+import { trpcHandler } from "./server/trpc-handler";
 import { createHandler } from "@universal-middleware/hono";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
-import { trpcHandler } from "./server/trpc-handler";
-import { vikeHandler } from "./server/vike-handler";
 
 const app = new Hono();
 
@@ -19,4 +19,4 @@ export const GET = handle(app);
 
 export const POST = handle(app);
 
-export default app;
+export default process.env.NODE_ENV === "production" ? undefined : app;

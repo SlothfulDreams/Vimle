@@ -236,7 +236,7 @@ export function getPoolSize(): {
  */
 export function getChallengeFromPool(
   difficulty: DifficultyLevel,
-  index: number,
+  index: number
 ): StaticChallenge {
   const pool = STATIC_CHALLENGE_POOL[difficulty];
 
@@ -253,7 +253,7 @@ export function getChallengeFromPool(
  * Get a random challenge from the pool
  */
 export function getRandomChallengeFromPool(
-  difficulty: DifficultyLevel,
+  difficulty: DifficultyLevel
 ): StaticChallenge {
   const pool = STATIC_CHALLENGE_POOL[difficulty];
 
@@ -277,7 +277,7 @@ export function validateChallengePool(): {
   const warnings: string[] = [];
 
   for (const [difficulty, challenges] of Object.entries(
-    STATIC_CHALLENGE_POOL,
+    STATIC_CHALLENGE_POOL
   )) {
     if (challenges.length === 0) {
       warnings.push(`No challenges defined for difficulty: ${difficulty}`);
@@ -299,13 +299,13 @@ export function validateChallengePool(): {
       // Check content quality
       if (challenge.content && challenge.content.length < 10) {
         warnings.push(
-          `${prefix}: Content is very short (${challenge.content.length} chars)`,
+          `${prefix}: Content is very short (${challenge.content.length} chars)`
         );
       }
 
       if (challenge.content && challenge.content.length > 1000) {
         warnings.push(
-          `${prefix}: Content is very long (${challenge.content.length} chars)`,
+          `${prefix}: Content is very long (${challenge.content.length} chars)`
         );
       }
 
@@ -316,7 +316,7 @@ export function validateChallengePool(): {
         !challenge.content.includes("=")
       ) {
         warnings.push(
-          `${prefix}: Content may not be valid JavaScript/TypeScript`,
+          `${prefix}: Content may not be valid JavaScript/TypeScript`
         );
       }
     });

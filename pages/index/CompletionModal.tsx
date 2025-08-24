@@ -31,7 +31,7 @@ export function CompletionModal({
   // Fetch global statistics for this challenge
   const globalStatsQuery = trpc.getGlobalChallengeStats.useQuery(
     { challengeId },
-    { enabled: open },
+    { enabled: open }
   );
 
   const userTimeSeconds = (userTimeMs / 1000).toFixed(2);
@@ -68,7 +68,7 @@ export function CompletionModal({
       const msUntilTomorrow = tomorrow.getTime() - now.getTime();
       const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
       const minutes = Math.floor(
-        (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60),
+        (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
       );
 
       setTimeUntilNext(`${hours}h ${minutes}m`);
@@ -98,7 +98,7 @@ export function CompletionModal({
               variant="outline"
               className={cn(
                 "text-xs font-medium capitalize",
-                getDifficultyColor(difficulty),
+                getDifficultyColor(difficulty)
               )}
             >
               {difficulty}
@@ -113,7 +113,7 @@ export function CompletionModal({
                 "text-center p-4 rounded-lg border-2 transition-colors bg-muted/30",
                 beatAverage
                   ? "border-green-500 bg-green-500/10"
-                  : "border-border",
+                  : "border-border"
               )}
             >
               <div className="text-sm text-muted-foreground mb-1">
@@ -150,8 +150,16 @@ export function CompletionModal({
               <div className="text-center text-sm text-muted-foreground">
                 <p>
                   {beatAverage
-                    ? `You're faster than ${Math.round(((globalStatsQuery.data.totalCompletions - 1) / globalStatsQuery.data.totalCompletions) * 100)}% of players!`
-                    : `Completed by ${globalStatsQuery.data.totalCompletions} ${globalStatsQuery.data.totalCompletions === 1 ? "player" : "players"} today`}
+                    ? `You're faster than ${Math.round(
+                        ((globalStatsQuery.data.totalCompletions - 1) /
+                          globalStatsQuery.data.totalCompletions) *
+                          100
+                      )}% of players!`
+                    : `Completed by ${globalStatsQuery.data.totalCompletions} ${
+                        globalStatsQuery.data.totalCompletions === 1
+                          ? "player"
+                          : "players"
+                      } today`}
                 </p>
               </div>
             )}

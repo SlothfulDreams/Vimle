@@ -11,7 +11,7 @@ import { useEffect, useRef } from "react";
 export function useDebounce(
   callback: () => void,
   delay: number,
-  dependencies: React.DependencyList,
+  dependencies: React.DependencyList
 ) {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 

@@ -80,7 +80,7 @@ async function getGeminiService(): Promise<GeminiChallengeService> {
  * Falls back to static challenges if AI generation fails
  */
 export async function generateTodaysChallenge(
-  options?: Partial<GenerationOptions>,
+  options?: Partial<GenerationOptions>
 ): Promise<GenerationResult> {
   const {
     date = getTodaysDate(),
@@ -134,7 +134,7 @@ export async function generateTodaysChallenge(
  * Generate challenge with retry logic
  */
 async function generateWithRetries(
-  options: GenerationOptions,
+  options: GenerationOptions
 ): Promise<GenerationResult> {
   const { date, difficulty, retries = getAIConfig().maxRetries } = options;
   let attemptCount = 0;
@@ -216,7 +216,7 @@ async function generateWithRetries(
  */
 function generateStaticFallback(
   date: string,
-  difficulty: "easy" | "medium" | "hard",
+  difficulty: "easy" | "medium" | "hard"
 ): GenerationResult {
   // Generate deterministic index based on date
   const challengeIndex = hashString(date);

@@ -46,7 +46,7 @@ export function EditorContainer({
     leftEditorContent,
     rightEditorContent,
     hasUserInteracted,
-    timer.isRunning,
+    timer.isRunning
   );
 
   /**
@@ -98,7 +98,7 @@ export function EditorContainer({
         console.debug("Motion captured:", motion);
       }
     },
-    [handleUserInteraction],
+    [handleUserInteraction]
   );
 
   /**
@@ -119,7 +119,7 @@ export function EditorContainer({
       hasUserInteracted,
       timer.isRunning,
       completion.shouldComplete,
-    ],
+    ]
   );
 
   return (

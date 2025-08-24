@@ -1,6 +1,7 @@
-import devServer from "@hono/vite-dev-server";
+import vercel from "@vite-plugin-vercel/vike";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import devServer from "@hono/vite-dev-server";
 import vike from "vike/plugin";
 import { defineConfig } from "vite";
 
@@ -24,16 +25,21 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
+    vercel(),
   ],
 
   build: {
-    rollupOptions: {
-      external: ["@prisma/client", ".prisma/client"],
-    },
+    target: "es2022",
   },
-  ssr: {
-    external: ["@prisma/client", ".prisma/client"],
-    noExternal: [],
+
+  vercel: {
+    additionalEndpoints: [
+      {
+        source: "hono-entry.ts",
+        destination: "ssr_",
+        route: false,
+      },
+    ],
   },
 
   resolve: {

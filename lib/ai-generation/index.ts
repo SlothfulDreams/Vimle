@@ -4,7 +4,11 @@
  */
 
 // Configuration
-export { getAIServiceConfig, isAIEnabled, isGeminiEnabled } from "./config/index.js";
+export {
+  getAIServiceConfig,
+  isAIEnabled,
+  isGeminiEnabled,
+} from "./config/index.js";
 // Gemini-specific exports
 export * from "./gemini/index.js";
 export type { GenerationOptions, GenerationResult } from "./generator.js";

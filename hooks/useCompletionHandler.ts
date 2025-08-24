@@ -16,7 +16,7 @@ export function useCompletionHandler(
   leftContent: string,
   rightContent: string,
   hasUserInteracted: boolean,
-  isTimerRunning: boolean,
+  isTimerRunning: boolean
 ) {
   const { canAttempt, submitCompletion } = useChallenge();
 
@@ -36,7 +36,7 @@ export function useCompletionHandler(
       left: leftContent.replace(/\s/g, ""),
       right: rightContent.replace(/\s/g, ""),
     }),
-    [leftContent, rightContent],
+    [leftContent, rightContent]
   );
 
   /**
@@ -70,7 +70,7 @@ export function useCompletionHandler(
       isContentMatching,
       canAttempt,
       uiState.isSubmitting,
-    ],
+    ]
   );
 
   /**
@@ -110,7 +110,7 @@ export function useCompletionHandler(
         }));
       }
     },
-    [shouldComplete, submitCompletion],
+    [shouldComplete, submitCompletion]
   );
 
   /**

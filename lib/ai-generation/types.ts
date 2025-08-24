@@ -147,7 +147,7 @@ export interface AIService {
 
   /** Generate a challenge */
   generateChallenge(
-    request: ChallengeGenerationRequest,
+    request: ChallengeGenerationRequest
   ): Promise<GenerationResultWithMetadata>;
 
   /** Check service health */
