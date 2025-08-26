@@ -122,6 +122,21 @@ IMPORTANT EDITING CHALLENGE RULES:
 - Make sure both versions are syntactically valid JavaScript/TypeScript
 - The editing should feel natural - like fixing bugs or refactoring code
 
+CODE FORMATTING REQUIREMENTS:
+- Use proper indentation with 2 spaces per level
+- Each statement should be on its own line
+- Function bodies must have proper line breaks and indentation
+- Never put entire functions on a single line
+- Opening braces { should be followed by a newline
+- Closing braces } should be on their own line
+- Example of GOOD formatting:
+  function greet(name) {
+    console.log("Hello, " + name);
+    return true;
+  }
+- Example of BAD formatting (avoid this):
+  function greet(name) { console.log("Hello, " + name); return true; }
+
 Examples of good editing differences:
 - Variable name changes (firstName → fullName)
 - String value changes ("Hello" → "Welcome")

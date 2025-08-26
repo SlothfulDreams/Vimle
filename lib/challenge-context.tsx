@@ -56,13 +56,21 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [userAttempt, setUserAttempt] = useState<ChallengeAttempt | null>(null);
   const [loading, setLoading] = useState(true);
   const [localAttemptLoaded, setLocalAttemptLoaded] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // UI state management
   const [showTomorrowScreen, setShowTomorrowScreen] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
-  // Load today's challenge from API
+  // Hydration-safe mounting effect
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load today's challenge from API (only after mounting to prevent hydration errors)
+  useEffect(() => {
+    if (!mounted) return;
+
     const loadTodaysChallenge = async () => {
       try {
         const challenge = await trpc.getTodaysChallenge.query();
@@ -75,11 +83,13 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadTodaysChallenge();
-  }, []);
+  }, [mounted]);
 
   // Load user attempt from API (with localStorage fallback)
   useEffect(() => {
-    if (typeof window !== "undefined" && todaysChallenge && user?.id) {
+    if (!mounted || !todaysChallenge) return;
+    
+    if (user?.id) {
       const loadUserAttempt = async () => {
         try {
           // Try to load from API first
@@ -126,7 +136,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       };
       
       loadUserAttempt();
-    } else if (typeof window !== "undefined" && todaysChallenge && !user?.id) {
+    } else {
       // For anonymous users, only check localStorage
       const localAttempt = getTodaysLocalAttempt();
       if (localAttempt && localAttempt.challengeId === todaysChallenge.id) {
@@ -141,7 +151,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
       }
       setLocalAttemptLoaded(true);
     }
-  }, [todaysChallenge, user?.id]);
+  }, [mounted, todaysChallenge, user?.id]);
 
   // Check if tomorrow screen should be shown
   const getTomorrowScreenKey = useCallback(() => {

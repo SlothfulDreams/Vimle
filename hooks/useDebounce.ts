@@ -36,7 +36,7 @@ export function useDebounce(
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [delay, ...dependencies]); // Removed callback from dependency array
+  }, dependencies); // Fixed: don't spread dependencies to prevent infinite re-renders
 
   // Cleanup on unmount
   useEffect(() => {

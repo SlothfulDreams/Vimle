@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCompletionHandler } from "@/hooks/useCompletionHandler";
 import { useDebounce } from "@/hooks/useDebounce";
 import { VimEditor } from "@/pages/index/VimEditor";
@@ -94,22 +94,28 @@ export function EditorContainer({
   /**
    * Debounced completion check to avoid excessive comparisons
    * Triggers 300ms after last content change
+   * Uses useMemo for stable dependency values to prevent unnecessary debounce triggers
    */
+  const completionDeps = useMemo(
+    () => ({
+      leftContent: leftEditorContent,
+      rightContent: rightEditorContent,
+      isRunning: timer.isRunning,
+      shouldComplete: completion.shouldComplete,
+    }),
+    [leftEditorContent, rightEditorContent, timer.isRunning, completion.shouldComplete],
+  );
+
   useDebounce(
     () => {
-      if (completion.shouldComplete) {
+      if (completionDeps.shouldComplete) {
         const completionTime = timer.elapsedTime;
         timer.stopTimer();
         completion.handleCompletion(completionTime);
       }
     },
     300,
-    [
-      leftEditorContent,
-      rightEditorContent,
-      timer.isRunning,
-      completion.shouldComplete,
-    ],
+    [completionDeps],
   );
 
   return (
