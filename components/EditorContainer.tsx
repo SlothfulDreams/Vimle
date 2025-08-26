@@ -98,7 +98,8 @@ export function EditorContainer({
   useDebounce(
     () => {
       if (completion.shouldComplete) {
-        const completionTime = timer.stopTimer();
+        const completionTime = timer.elapsedTime;
+        timer.stopTimer();
         completion.handleCompletion(completionTime);
       }
     },

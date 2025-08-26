@@ -22,7 +22,7 @@ export function TomorrowScreen({
   const getDifficultyColor = (diff: string) => {
     switch (diff) {
       case "easy":
-        return "bg-red-500/20 text-red-700 border-red-300";
+        return "bg-green-500/20 text-green-700 border-green-300";
       case "medium":
         return "bg-orange-500/20 text-orange-700 border-orange-300";
       case "hard":

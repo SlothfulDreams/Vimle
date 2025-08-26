@@ -104,6 +104,7 @@ export const appRouter = router({
         return {
           id: existingChallenge.id,
           date: today,
+          startingContent: existingChallenge.starting_content || undefined,
           content: existingChallenge.content,
           title: existingChallenge.title,
           difficulty: existingChallenge.difficulty as DifficultyLevel,
@@ -138,6 +139,7 @@ export const appRouter = router({
             data: {
               id: challenge.id,
               date: new Date(challenge.date),
+              starting_content: challenge.startingContent || null,
               content: challenge.content,
               title: challenge.title,
               difficulty: challenge.difficulty,
@@ -185,6 +187,7 @@ export const appRouter = router({
         data: {
           id: staticChallenge.id,
           date: new Date(staticChallenge.date),
+          starting_content: staticChallenge.startingContent || null,
           content: staticChallenge.content,
           title: staticChallenge.title,
           difficulty: staticChallenge.difficulty,

@@ -36,6 +36,7 @@ model User {
 model Challenge {
   id                String   @id @default(cuid())
   date              DateTime @unique @db.Date
+  starting_content  String? // Starting code that users need to edit
   content           String
   title             String
   difficulty        String   @default("medium")

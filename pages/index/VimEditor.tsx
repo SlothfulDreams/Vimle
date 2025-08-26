@@ -124,6 +124,8 @@ export function VimEditor({
         padding: "2px 8px",
         fontSize: "12px",
         fontFamily: EDITOR_CONFIG.fontFamily,
+        position: "relative",
+        zIndex: 1,
       },
       ".cm-scroller": {
         height: "100%",
