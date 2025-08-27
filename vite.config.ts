@@ -1,6 +1,5 @@
 import devServer from "@hono/vite-dev-server";
 import tailwindcss from "@tailwindcss/vite";
-import vercel from "@vite-plugin-vercel/vike";
 import react from "@vitejs/plugin-react";
 import vike from "vike/plugin";
 import { defineConfig } from "vite";
@@ -25,7 +24,6 @@ export default defineConfig({
     }),
     react(),
     tailwindcss(),
-    vercel(),
   ],
 
   build: {
@@ -35,16 +33,6 @@ export default defineConfig({
   ssr: {
     noExternal: [],
     external: ["@prisma/client", "prisma"],
-  },
-
-  vercel: {
-    additionalEndpoints: [
-      {
-        source: "hono-entry.ts",
-        destination: "ssr_",
-        route: false,
-      },
-    ],
   },
 
   resolve: {

@@ -2,7 +2,6 @@ import { trpcServer } from "@hono/trpc-server";
 import { createHandler } from "@universal-middleware/hono";
 import { config } from "dotenv";
 import { Hono } from "hono";
-import { handle } from "hono/vercel";
 import { appRouter } from "./trpc/server";
 import { vikeHandler } from "./server/vike-handler";
 
@@ -25,9 +24,5 @@ app.use(
  * @link {@see https://vike.dev}
  **/
 app.all("*", createHandler(vikeHandler)());
-
-export const GET = handle(app);
-
-export const POST = handle(app);
 
 export default app;
