@@ -3,7 +3,7 @@
 Generated with [vike.dev/new](https://vike.dev/new) ([version 462](https://www.npmjs.com/package/create-vike/v/0.0.462)) using this command:
 
 ```sh
-npm create vike@latest --- --react --tailwindcss --shadcn-ui --trpc --hono --prisma --vercel --biome
+npm create vike@latest --- --react --tailwindcss --shadcn-ui --trpc --hono --prisma --biome
 ```
 
 ## Contents

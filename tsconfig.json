@@ -11,7 +11,7 @@
     "moduleResolution": "Bundler",
     "target": "ES2022",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["vite/client", "vike-react", "vite-plugin-vercel/types"],
+    "types": ["vite/client", "vike-react"],
     "jsx": "react-jsx",
     "jsxImportSource": "react",
     "paths": {

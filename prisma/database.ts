@@ -14,7 +14,7 @@ import {
   type Challenge,
   PrismaClient,
   type User,
-} from "../lib/generated/prisma/client";
+} from "../lib/generated/prisma/client.js";
 
 // Global variable to store the Prisma client instance
 declare global {
