@@ -66,12 +66,7 @@ export function useCompletionHandler(
       isContentMatching &&
       canAttempt &&
       !uiState.isSubmitting,
-    [
-      timer.isRunning,
-      isContentMatching,
-      canAttempt,
-      uiState.isSubmitting,
-    ],
+    [timer.isRunning, isContentMatching, canAttempt, uiState.isSubmitting],
   );
 
   /**

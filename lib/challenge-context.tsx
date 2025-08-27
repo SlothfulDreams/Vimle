@@ -6,13 +6,10 @@ import {
   useEffect,
   useState,
 } from "react";
-import type { DailyChallenge } from "@/types";
 import { trpc } from "@/trpc/client";
+import type { DailyChallenge } from "@/types";
 import { useAuth } from "./auth-context.js";
-import {
-  getTodaysLocalAttempt,
-  saveLocalCompletion,
-} from "./local-storage.js";
+import { getTodaysLocalAttempt, saveLocalCompletion } from "./local-storage.js";
 
 interface ChallengeAttempt {
   id: string;
@@ -42,6 +39,29 @@ interface ChallengeContextType {
   refreshChallenge: () => Promise<void>;
   setTomorrowScreen: (show: boolean) => void;
   setCompletionModal: (show: boolean) => void;
+}
+
+/**
+ * Convert API response with date strings to ChallengeAttempt with Date objects
+ */
+function convertApiAttemptToChallengeAttempt(apiAttempt: {
+  id: string;
+  userId: string;
+  challengeId: string;
+  completedAt: string | null;
+  timeMs: number | null;
+  attemptDate: string;
+}): ChallengeAttempt {
+  return {
+    id: apiAttempt.id,
+    userId: apiAttempt.userId,
+    challengeId: apiAttempt.challengeId,
+    completedAt: apiAttempt.completedAt
+      ? new Date(apiAttempt.completedAt)
+      : undefined,
+    timeMs: apiAttempt.timeMs ?? undefined,
+    attemptDate: new Date(apiAttempt.attemptDate),
+  };
 }
 
 const ChallengeContext = createContext<ChallengeContextType | undefined>(
@@ -88,7 +108,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   // Load user attempt from API (with localStorage fallback)
   useEffect(() => {
     if (!mounted || !todaysChallenge) return;
-    
+
     if (user?.id) {
       const loadUserAttempt = async () => {
         try {
@@ -97,13 +117,16 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
             userId: user.id,
             challengeDate: todaysChallenge.date,
           });
-          
+
           if (apiAttempt) {
-            setUserAttempt(apiAttempt);
+            setUserAttempt(convertApiAttemptToChallengeAttempt(apiAttempt));
           } else {
             // Fall back to localStorage if no API attempt
             const localAttempt = getTodaysLocalAttempt();
-            if (localAttempt && localAttempt.challengeId === todaysChallenge.id) {
+            if (
+              localAttempt &&
+              localAttempt.challengeId === todaysChallenge.id
+            ) {
               setUserAttempt({
                 id: `local-${localAttempt.challengeDate}`,
                 userId: user.id,
@@ -112,7 +135,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
                 timeMs: localAttempt.timeMs,
                 attemptDate: new Date(localAttempt.challengeDate),
               });
-              
+
               // Optionally migrate localStorage data to database
               // This could be done with a separate migration endpoint
             }
@@ -134,7 +157,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
         }
         setLocalAttemptLoaded(true);
       };
-      
+
       loadUserAttempt();
     } else {
       // For anonymous users, only check localStorage
@@ -227,9 +250,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
               challengeDate: todaysChallenge.date,
               timeMs,
             });
-            
+
             console.log("Challenge completed successfully (database):", result);
-            
+
             // Update local state with database response
             const newAttempt = {
               id: result.attemptId || `db-${Date.now()}`,
@@ -239,10 +262,13 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
               timeMs,
               attemptDate: new Date(),
             };
-            
+
             setUserAttempt(newAttempt);
           } catch (apiError) {
-            console.error("Failed to save to database, but localStorage save succeeded:", apiError);
+            console.error(
+              "Failed to save to database, but localStorage save succeeded:",
+              apiError,
+            );
             // Still update local state even if API fails
             const newAttempt = {
               id: `local-${todaysChallenge.date}`,
@@ -252,13 +278,15 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
               timeMs,
               attemptDate: new Date(),
             };
-            
+
             setUserAttempt(newAttempt);
           }
         } else {
           // For anonymous users, only use localStorage
-          console.log("Challenge completed successfully (localStorage only - anonymous user)");
-          
+          console.log(
+            "Challenge completed successfully (localStorage only - anonymous user)",
+          );
+
           const newAttempt = {
             id: `local-${todaysChallenge.date}`,
             userId: "anonymous",
@@ -267,7 +295,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
             timeMs,
             attemptDate: new Date(),
           };
-          
+
           setUserAttempt(newAttempt);
         }
 
@@ -285,11 +313,11 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const refreshChallenge = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch fresh challenge from API
       const challenge = await trpc.getTodaysChallenge.query();
       setTodaysChallenge(challenge);
-      
+
       // If user is authenticated, also refresh their attempt status
       if (user?.id) {
         try {
@@ -297,9 +325,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
             userId: user.id,
             challengeDate: challenge.date,
           });
-          
+
           if (apiAttempt) {
-            setUserAttempt(apiAttempt);
+            setUserAttempt(convertApiAttemptToChallengeAttempt(apiAttempt));
           } else {
             // Check localStorage as fallback
             const localAttempt = getTodaysLocalAttempt();
@@ -320,7 +348,7 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
           console.error("Failed to refresh user attempt:", error);
         }
       }
-      
+
       console.log("Challenge data refreshed successfully");
     } catch (error) {
       console.error("Failed to refresh challenge:", error);
@@ -342,7 +370,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   // Debug helper to force completion modal (remove in production)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      (window as Window & { forceCompletionModal?: () => void }).forceCompletionModal = () => {
+      (
+        window as Window & { forceCompletionModal?: () => void }
+      ).forceCompletionModal = () => {
         console.log("Forcing completion modal for testing...");
         setShowCompletionModal(true);
       };

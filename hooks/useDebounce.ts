@@ -36,6 +36,7 @@ export function useDebounce(
         clearTimeout(timeoutRef.current);
       }
     };
+    // biome-ignore lint/correctness/useExhaustiveDependencies: Dynamic dependencies array is intentional to prevent re-renders
   }, dependencies); // Fixed: don't spread dependencies to prevent infinite re-renders
 
   // Cleanup on unmount

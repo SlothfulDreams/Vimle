@@ -1,10 +1,10 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
-import {
-  generateTodaysChallenge,
-  type GenerationResult,
-} from "../lib/ai-generation/index.js";
 import { isGeminiEnabled } from "../lib/ai-generation/config/index.js";
+import {
+  type GenerationResult,
+  generateTodaysChallenge,
+} from "../lib/ai-generation/index.js";
 import { challengeService, getTodaysDate } from "../lib/challenge/index.js";
 import { logger } from "../lib/logger.js";
 import { db, ensureChallenge, ensureUser } from "../prisma/database.js";
@@ -111,7 +111,7 @@ export const appRouter = router({
         };
       }
 
-      logger.info("📅 No existing challenge found for today", { 
+      logger.info("📅 No existing challenge found for today", {
         date: today,
         geminiEnabled: isGeminiEnabled(),
       });
@@ -120,7 +120,7 @@ export const appRouter = router({
       if (isGeminiEnabled()) {
         logger.info("🚀 Generating new AI challenge", {
           service: "gemini",
-          date: today
+          date: today,
         });
 
         const generationResult = await generateTodaysChallenge();
@@ -171,7 +171,7 @@ export const appRouter = router({
         reason: "Gemini not enabled",
         geminiEnabled: isGeminiEnabled(),
       });
-      
+
       const staticChallengeResult =
         await challengeService.generateTodaysChallenge({ forceAI: false });
       const staticChallenge = staticChallengeResult.challenge;
@@ -202,16 +202,16 @@ export const appRouter = router({
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      
+
       // Ultimate fallback to static generation without database storage
       const fallbackResult = await challengeService.generateTodaysChallenge({
         forceAI: false,
       });
-      
+
       logger.warn("⚠️ Using ultimate fallback challenge (no database storage)", {
         challengeId: fallbackResult.challenge.id,
       });
-      
+
       return fallbackResult.challenge;
     }
   }),
@@ -219,12 +219,18 @@ export const appRouter = router({
   // Debug environment variables
   debugEnvironment: publicProcedure.query(() => {
     return {
-      geminiApiKey: process.env.GEMINI_API_KEY ? `${process.env.GEMINI_API_KEY.substring(0, 10)}...` : 'NOT_FOUND',
-      googleApiKey: process.env.GOOGLE_AI_API_KEY ? `${process.env.GOOGLE_AI_API_KEY.substring(0, 10)}...` : 'NOT_FOUND',
+      geminiApiKey: process.env.GEMINI_API_KEY
+        ? `${process.env.GEMINI_API_KEY.substring(0, 10)}...`
+        : "NOT_FOUND",
+      googleApiKey: process.env.GOOGLE_AI_API_KEY
+        ? `${process.env.GOOGLE_AI_API_KEY.substring(0, 10)}...`
+        : "NOT_FOUND",
       nodeEnv: process.env.NODE_ENV,
       hasGeminiKey: Boolean(process.env.GEMINI_API_KEY),
       hasGoogleKey: Boolean(process.env.GOOGLE_AI_API_KEY),
-      allEnvKeys: Object.keys(process.env).filter(key => key.includes('GEMINI') || key.includes('GOOGLE')),
+      allEnvKeys: Object.keys(process.env).filter(
+        (key) => key.includes("GEMINI") || key.includes("GOOGLE"),
+      ),
     };
   }),
 
@@ -232,95 +238,115 @@ export const appRouter = router({
   testGeminiAPI: publicProcedure.query(async () => {
     try {
       logger.info("🧪 Testing Gemini API directly...");
-      
+
       // First, test configuration
       const geminiEnabled = isGeminiEnabled();
-      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
-      
+      const apiKey =
+        process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
+
       logger.info("🔧 Configuration check", {
         geminiEnabled,
         hasApiKey: Boolean(apiKey),
         apiKeyLength: apiKey?.length || 0,
-        apiKeyPrefix: apiKey?.substring(0, 10) + "..." || "NOT_SET",
-        debugMode: process.env.GEMINI_DEBUG === "true"
+        apiKeyPrefix: `${apiKey?.substring(0, 10)}...` || "NOT_SET",
+        debugMode: process.env.GEMINI_DEBUG === "true",
       });
 
       if (!geminiEnabled) {
         return {
           success: false,
-          error: "Gemini service is not enabled. Check your API key configuration.",
-          generatedBy: 'config_error',
+          error:
+            "Gemini service is not enabled. Check your API key configuration.",
+          generatedBy: "config_error",
           configuration: {
             geminiEnabled: false,
             hasApiKey: Boolean(apiKey),
-            recommendation: "Set GEMINI_API_KEY or GOOGLE_AI_API_KEY environment variable"
-          }
+            recommendation:
+              "Set GEMINI_API_KEY or GOOGLE_AI_API_KEY environment variable",
+          },
         };
       }
-      
+
       const result = await generateTodaysChallenge({
-        date: '2025-08-25', // Use tomorrow's date to avoid conflicts
-        difficulty: 'easy' // Start with easy for testing
+        date: "2025-08-25", // Use tomorrow's date to avoid conflicts
+        difficulty: "easy", // Start with easy for testing
       });
-      
+
       logger.info("✅ Gemini API test successful", {
         generatedBy: result.generatedBy,
         title: result.challenge.title,
         generationTime: result.metadata?.generationTimeMs,
       });
-      
+
       return {
         success: true,
         generatedBy: result.generatedBy,
         title: result.challenge.title,
         difficulty: result.challenge.difficulty,
         generationTime: result.metadata?.generationTimeMs,
-        contentPreview: result.challenge.content.substring(0, 150) + '...',
-        startingContentPreview: result.challenge.startingContent?.substring(0, 150) + '...' || 'None',
-        promptUsed: result.promptUsed.substring(0, 200) + '...',
+        contentPreview: `${result.challenge.content.substring(0, 150)}...`,
+        startingContentPreview:
+          `${result.challenge.startingContent?.substring(0, 150)}...` || "None",
+        promptUsed: `${result.promptUsed.substring(0, 200)}...`,
         configuration: {
           geminiEnabled: true,
           hasApiKey: true,
-          debugMode: process.env.GEMINI_DEBUG === "true"
-        }
+          debugMode: process.env.GEMINI_DEBUG === "true",
+        },
       };
     } catch (error) {
       logger.error("❌ Gemini API test failed", {
         error: error instanceof Error ? error.message : String(error),
-        name: error instanceof Error ? error.name : 'Unknown',
+        name: error instanceof Error ? error.name : "Unknown",
         stack: error instanceof Error ? error.stack : undefined,
       });
-      
+
       // Extract helpful troubleshooting info
-      let troubleshooting = [];
+      const troubleshooting = [];
       if (error instanceof Error) {
         const errorMessage = error.message.toLowerCase();
-        
-        if (errorMessage.includes("api_key") || errorMessage.includes("unauthorized")) {
-          troubleshooting.push("Check that your GEMINI_API_KEY is valid and has proper permissions");
+
+        if (
+          errorMessage.includes("api_key") ||
+          errorMessage.includes("unauthorized")
+        ) {
+          troubleshooting.push(
+            "Check that your GEMINI_API_KEY is valid and has proper permissions",
+          );
         }
         if (errorMessage.includes("quota") || errorMessage.includes("rate")) {
-          troubleshooting.push("You may have hit API rate limits or quota. Wait and try again.");
+          troubleshooting.push(
+            "You may have hit API rate limits or quota. Wait and try again.",
+          );
         }
-        if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
-          troubleshooting.push("Check your internet connection and firewall settings");
+        if (
+          errorMessage.includes("network") ||
+          errorMessage.includes("fetch")
+        ) {
+          troubleshooting.push(
+            "Check your internet connection and firewall settings",
+          );
         }
         if (errorMessage.includes("model")) {
-          troubleshooting.push("The model name might be incorrect. Using: gemini-1.5-flash");
+          troubleshooting.push(
+            "The model name might be incorrect. Using: gemini-1.5-flash",
+          );
         }
       }
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : String(error),
-        errorName: error instanceof Error ? error.name : 'Unknown',
-        generatedBy: 'error',
+        errorName: error instanceof Error ? error.name : "Unknown",
+        generatedBy: "error",
         troubleshooting,
         configuration: {
           geminiEnabled: isGeminiEnabled(),
-          hasApiKey: Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY),
-          debugMode: process.env.GEMINI_DEBUG === "true"
-        }
+          hasApiKey: Boolean(
+            process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY,
+          ),
+          debugMode: process.env.GEMINI_DEBUG === "true",
+        },
       };
     }
   }),

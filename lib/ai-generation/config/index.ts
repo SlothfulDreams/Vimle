@@ -64,7 +64,7 @@ function validateConfig() {
     if (geminiApiKey) {
       logger.info("✅ Gemini API key found", {
         keyLength: geminiApiKey.length,
-        keyPrefix: geminiApiKey.substring(0, 10) + "...",
+        keyPrefix: `${geminiApiKey.substring(0, 10)}...`,
         model: geminiCfg.model,
       });
     } else {
@@ -72,7 +72,8 @@ function validateConfig() {
         envVarsChecked: ["GEMINI_API_KEY", "GOOGLE_AI_API_KEY"],
         geminiEnabled: geminiCfg.enabled,
         fallbackEnabled: aiCfg.enableFallback,
-        message: "AI challenge generation will be disabled - falling back to static challenges"
+        message:
+          "AI challenge generation will be disabled - falling back to static challenges",
       });
     }
   } else {

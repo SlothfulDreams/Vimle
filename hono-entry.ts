@@ -1,16 +1,23 @@
-import { config } from "dotenv";
-import { vikeHandler } from "./server/vike-handler";
-import { trpcHandler } from "./server/trpc-handler";
+import { trpcServer } from "@hono/trpc-server";
 import { createHandler } from "@universal-middleware/hono";
+import { config } from "dotenv";
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
+import { appRouter } from "./trpc/server";
+import { vikeHandler } from "./server/vike-handler";
 
 // Load environment variables from .env file
 config();
 
 const app = new Hono();
 
-app.use("/api/trpc/*", createHandler(trpcHandler)("/api/trpc"));
+app.use(
+  "/api/trpc/*",
+  trpcServer({
+    endpoint: "/api/trpc",
+    router: appRouter,
+  })
+);
 
 /**
  * Vike route

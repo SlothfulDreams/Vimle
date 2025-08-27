@@ -3,6 +3,8 @@
  * This file contains all common types used across components and services
  */
 
+import type { Session, User } from "@supabase/supabase-js";
+
 export type DifficultyLevel = "easy" | "medium" | "hard";
 
 /**
@@ -112,8 +114,8 @@ export interface VimEditorProps {
  * Authentication context state
  */
 export interface AuthState {
-  user: any | null; // TODO: Replace with proper User type from Supabase
-  session: any | null; // TODO: Replace with proper Session type from Supabase
+  user: User | null;
+  session: Session | null;
   loading: boolean;
 }
 

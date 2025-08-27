@@ -1,6 +1,6 @@
-import { config } from "dotenv";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { config } from "dotenv";
 import { type Context, Hono } from "hono";
 import { env } from "hono/adapter";
 import { compress } from "hono/compress";

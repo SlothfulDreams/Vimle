@@ -29,6 +29,9 @@ importers:
       '@hono/node-server':
         specifier: ^1.19.0
         version: 1.19.0(hono@4.9.4)
+      '@hono/trpc-server':
+        specifier: ^0.4.0
+        version: 0.4.0(@trpc/server@11.5.0(typescript@5.9.2))(hono@4.9.4)
       '@prisma/client':
         specifier: ^6.14.0
         version: 6.14.0(prisma@6.14.0(magicast@0.3.5)(typescript@5.9.2))(typescript@5.9.2)
@@ -693,6 +696,13 @@ packages:
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
+
+  '@hono/trpc-server@0.4.0':
+    resolution: {integrity: sha512-LGlJfCmNIGMwcknZEIYdujVMs9OkNVazhpOhaz3kTWOXvNL660VOHpvvktosCiJrajyBY1RtIJKQ+IKaQvNuSg==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      '@trpc/server': ^10.10.0 || >11.0.0-rc
+      hono: '>=4.*'
 
   '@hono/vite-dev-server@0.20.1':
     resolution: {integrity: sha512-wXikV0C5tPqwH6udA68VTsmnFKWGhIeBuhuxgdGDQIbVNbv5gD0vqKLhx4nG1o4dhksaWPiiSqZV58sTKUzNxA==}
@@ -2866,6 +2876,11 @@ snapshots:
 
   '@hono/node-server@1.19.0(hono@4.9.4)':
     dependencies:
+      hono: 4.9.4
+
+  '@hono/trpc-server@0.4.0(@trpc/server@11.5.0(typescript@5.9.2))(hono@4.9.4)':
+    dependencies:
+      '@trpc/server': 11.5.0(typescript@5.9.2)
       hono: 4.9.4
 
   '@hono/vite-dev-server@0.20.1(hono@4.9.4)':

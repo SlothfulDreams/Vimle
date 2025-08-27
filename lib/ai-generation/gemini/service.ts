@@ -83,7 +83,7 @@ export class GeminiChallengeService {
           : PROMPT_TEMPLATES[options.difficulty];
 
       // Make the API request
-      const result = await this.makeRequest(prompt, options.config?.timeout);
+      const result = await this.makeRequest(prompt, options.timeout);
       const response = await result.response;
       const text = response.text();
 
@@ -215,15 +215,18 @@ export class GeminiChallengeService {
     timeoutMs: number = DEFAULT_TIMEOUT_MS,
   ) {
     const requestId = Date.now().toString(36);
-    
+
     logger.debug("Making Gemini API request", {
       requestId,
       promptLength: prompt.length,
-      promptPreview: prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
+      promptPreview:
+        prompt.substring(0, 100) + (prompt.length > 100 ? "..." : ""),
       timeoutMs,
       model: this.modelName,
       apiKeyConfigured: Boolean(this.apiKey),
-      apiKeyPrefix: this.apiKey ? this.apiKey.substring(0, 10) + "..." : "NOT_CONFIGURED"
+      apiKeyPrefix: this.apiKey
+        ? `${this.apiKey.substring(0, 10)}...`
+        : "NOT_CONFIGURED",
     });
 
     const controller = new AbortController();
@@ -231,14 +234,14 @@ export class GeminiChallengeService {
 
     try {
       const startTime = Date.now();
-      
+
       // Note: Google AI SDK doesn't currently support AbortController
       // This is a placeholder for when it does, or for custom timeout handling
       const result = await this.model.generateContent(prompt);
       const requestTime = Date.now() - startTime;
-      
+
       clearTimeout(timeout);
-      
+
       logger.debug("Gemini API request completed", {
         requestId,
         requestTimeMs: requestTime,
@@ -251,28 +254,37 @@ export class GeminiChallengeService {
         logger.debug("Raw Gemini API response", {
           requestId,
           responseLength: responseText.length,
-          responsePreview: responseText.substring(0, 200) + (responseText.length > 200 ? "..." : ""),
-          fullResponse: process.env.GEMINI_DEBUG === "true" ? responseText : undefined
+          responsePreview:
+            responseText.substring(0, 200) +
+            (responseText.length > 200 ? "..." : ""),
+          fullResponse:
+            process.env.GEMINI_DEBUG === "true" ? responseText : undefined,
         });
       } catch (responseError) {
         logger.error("Failed to extract response text", {
           requestId,
-          error: responseError instanceof Error ? responseError.message : String(responseError)
+          error:
+            responseError instanceof Error
+              ? responseError.message
+              : String(responseError),
         });
       }
 
       return result;
     } catch (error) {
       clearTimeout(timeout);
-      
+
       // Enhanced error logging
       logger.error("Gemini API request failed", {
         requestId,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        } : String(error),
+        error:
+          error instanceof Error
+            ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack,
+              }
+            : String(error),
         promptLength: prompt.length,
         timeoutMs,
         model: this.modelName,
@@ -282,7 +294,7 @@ export class GeminiChallengeService {
       if (controller.signal.aborted) {
         throw createGeminiError.timeout(timeoutMs);
       }
-      
+
       throw error;
     }
   }
@@ -292,11 +304,12 @@ export class GeminiChallengeService {
    */
   private parseResponse(text: string): GeminiChallengeResponse {
     const debugId = Date.now().toString(36);
-    
+
     logger.debug("Parsing Gemini response", {
       debugId,
       responseLength: text.length,
-      responsePreview: text.substring(0, 300) + (text.length > 300 ? "..." : ""),
+      responsePreview:
+        text.substring(0, 300) + (text.length > 300 ? "..." : ""),
     });
 
     try {
@@ -323,14 +336,18 @@ export class GeminiChallengeService {
           logger.debug(`JSON extraction successful with strategy ${i + 1}`, {
             debugId,
             extractedLength: jsonStr.length,
-            extractedPreview: jsonStr.substring(0, 200) + (jsonStr.length > 200 ? "..." : "")
+            extractedPreview:
+              jsonStr.substring(0, 200) + (jsonStr.length > 200 ? "..." : ""),
           });
           break;
         }
       }
 
       if (!jsonStr) {
-        logger.error("No JSON found in response", { debugId, fullResponse: text });
+        logger.error("No JSON found in response", {
+          debugId,
+          fullResponse: text,
+        });
         throw new Error("No JSON content found in response");
       }
 
@@ -343,12 +360,13 @@ export class GeminiChallengeService {
       logger.debug("Attempting to parse JSON", {
         debugId,
         cleanedJsonLength: jsonStr.length,
-        cleanedJsonPreview: jsonStr.substring(0, 200) + (jsonStr.length > 200 ? "..." : "")
+        cleanedJsonPreview:
+          jsonStr.substring(0, 200) + (jsonStr.length > 200 ? "..." : ""),
       });
 
-      let parsed;
+      let parsed: Record<string, unknown>;
       try {
-        parsed = JSON.parse(jsonStr);
+        parsed = JSON.parse(jsonStr) as Record<string, unknown>;
         logger.debug("JSON parsing successful", {
           debugId,
           parsedKeys: Object.keys(parsed),
@@ -359,8 +377,11 @@ export class GeminiChallengeService {
       } catch (parseError) {
         logger.error("JSON parsing failed", {
           debugId,
-          parseError: parseError instanceof Error ? parseError.message : String(parseError),
-          jsonString: jsonStr
+          parseError:
+            parseError instanceof Error
+              ? parseError.message
+              : String(parseError),
+          jsonString: jsonStr,
         });
         throw parseError;
       }
@@ -378,19 +399,23 @@ export class GeminiChallengeService {
       } catch (zodError) {
         logger.error("Zod validation failed", {
           debugId,
-          zodError: zodError instanceof Error ? zodError.message : String(zodError),
-          parsedObject: parsed
+          zodError:
+            zodError instanceof Error ? zodError.message : String(zodError),
+          parsedObject: parsed,
         });
         throw zodError;
       }
     } catch (error) {
       logger.error("Complete response parsing failed", {
         debugId,
-        error: error instanceof Error ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack
-        } : String(error),
+        error:
+          error instanceof Error
+            ? {
+                name: error.name,
+                message: error.message,
+                stack: error.stack,
+              }
+            : String(error),
         originalResponse: text,
       });
 
@@ -407,7 +432,7 @@ export class GeminiChallengeService {
   private handleUnknownError(error: unknown): GeminiGenerationError {
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
-      const errorName = error.name.toLowerCase();
+      const _errorName = error.name.toLowerCase();
 
       logger.debug("Analyzing error for classification", {
         name: error.name,
@@ -417,39 +442,65 @@ export class GeminiChallengeService {
       });
 
       // Google AI SDK specific error patterns
-      if (errorMessage.includes("api_key") || errorMessage.includes("authentication") || errorMessage.includes("unauthorized")) {
+      if (
+        errorMessage.includes("api_key") ||
+        errorMessage.includes("authentication") ||
+        errorMessage.includes("unauthorized")
+      ) {
         logger.error("API key authentication error detected", {
           message: error.message,
-          recommendation: "Check that GEMINI_API_KEY or GOOGLE_AI_API_KEY is correctly set"
+          recommendation:
+            "Check that GEMINI_API_KEY or GOOGLE_AI_API_KEY is correctly set",
         });
-        return createGeminiError.apiError("Invalid or missing API key. Please check your GEMINI_API_KEY environment variable.", false);
+        return createGeminiError.apiError(
+          "Invalid or missing API key. Please check your GEMINI_API_KEY environment variable.",
+          false,
+        );
       }
 
-      if (errorMessage.includes("quota") || errorMessage.includes("rate") || errorMessage.includes("429")) {
+      if (
+        errorMessage.includes("quota") ||
+        errorMessage.includes("rate") ||
+        errorMessage.includes("429")
+      ) {
         const retryAfter = this.extractRetryAfter(error.message);
         logger.warn("Rate limit error detected", {
           message: error.message,
           retryAfter,
-          recommendation: "Wait before retrying or check your API quota"
+          recommendation: "Wait before retrying or check your API quota",
         });
         return createGeminiError.rateLimit(retryAfter);
       }
 
-      if (errorMessage.includes("model not found") || errorMessage.includes("invalid model")) {
+      if (
+        errorMessage.includes("model not found") ||
+        errorMessage.includes("invalid model")
+      ) {
         logger.error("Invalid model error detected", {
           message: error.message,
           currentModel: this.modelName,
-          recommendation: "Check if the model name is correct"
+          recommendation: "Check if the model name is correct",
         });
-        return createGeminiError.apiError(`Invalid model: ${this.modelName}. Please check the model name in your configuration.`, false);
+        return createGeminiError.apiError(
+          `Invalid model: ${this.modelName}. Please check the model name in your configuration.`,
+          false,
+        );
       }
 
-      if (errorMessage.includes("safety") || errorMessage.includes("blocked") || errorMessage.includes("harmful")) {
+      if (
+        errorMessage.includes("safety") ||
+        errorMessage.includes("blocked") ||
+        errorMessage.includes("harmful")
+      ) {
         logger.warn("Content safety filter triggered", {
           message: error.message,
-          recommendation: "The generated content was blocked by safety filters. Try a different prompt."
+          recommendation:
+            "The generated content was blocked by safety filters. Try a different prompt.",
         });
-        return createGeminiError.apiError("Content was blocked by safety filters. Try modifying the prompt.", true);
+        return createGeminiError.apiError(
+          "Content was blocked by safety filters. Try modifying the prompt.",
+          true,
+        );
       }
 
       if (
@@ -461,7 +512,7 @@ export class GeminiChallengeService {
       ) {
         logger.warn("Network error detected", {
           message: error.message,
-          recommendation: "Check internet connection and try again"
+          recommendation: "Check internet connection and try again",
         });
         return createGeminiError.network(error);
       }
@@ -469,19 +520,28 @@ export class GeminiChallengeService {
       if (errorMessage.includes("json") || errorMessage.includes("parse")) {
         logger.error("JSON parsing error detected", {
           message: error.message,
-          recommendation: "The API response format may have changed"
+          recommendation: "The API response format may have changed",
         });
-        return createGeminiError.invalidResponse("Failed to parse API response", error);
+        return createGeminiError.invalidResponse(
+          "Failed to parse API response",
+          error,
+        );
       }
 
       // Check for Google AI specific error structure
-      if (error.constructor.name.includes("Google") || errorMessage.includes("generativeai")) {
+      if (
+        error.constructor.name.includes("Google") ||
+        errorMessage.includes("generativeai")
+      ) {
         logger.error("Google AI SDK error detected", {
           name: error.name,
           message: error.message,
-          recommendation: "This appears to be a Google AI SDK specific error"
+          recommendation: "This appears to be a Google AI SDK specific error",
         });
-        return createGeminiError.apiError(`Google AI SDK Error: ${error.message}`, true);
+        return createGeminiError.apiError(
+          `Google AI SDK Error: ${error.message}`,
+          true,
+        );
       }
 
       // Generic error handling
@@ -501,7 +561,8 @@ export class GeminiChallengeService {
    */
   private extractRetryAfter(message: string): number | undefined {
     // Look for retry-after patterns in the error message
-    const retryMatch = message.match(/retry.*?(\d+)/i) || message.match(/wait.*?(\d+)/i);
+    const retryMatch =
+      message.match(/retry.*?(\d+)/i) || message.match(/wait.*?(\d+)/i);
     if (retryMatch) {
       const seconds = parseInt(retryMatch[1], 10);
       return Number.isNaN(seconds) ? undefined : seconds;

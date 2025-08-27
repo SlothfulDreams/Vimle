@@ -4,12 +4,12 @@
  * Handles both AI-generated and static challenges
  */
 
+import type { DailyChallenge } from "../../types/index.js";
 import {
   generateTodaysChallenge as generateAIChallenge,
   isAIEnabled,
 } from "../ai-generation/index.js";
 import { logger } from "../logger.js";
-import type { DailyChallenge } from "../../types/index.js";
 import {
   getChallengeFromPool,
   getPoolSize,
@@ -79,7 +79,8 @@ export class ChallengeService {
 
     // Check AI availability and preferences
     const aiAvailable = isAIEnabled();
-    const shouldUseAI = this.config.preferAI && aiAvailable && !options.forceAI === false;
+    const shouldUseAI =
+      this.config.preferAI && aiAvailable && !options.forceAI === false;
 
     logger.info("📊 Challenge generation strategy", {
       preferAI: this.config.preferAI,
@@ -108,7 +109,7 @@ export class ChallengeService {
         // Fall back to static if enabled
         if (fullOptions.allowFallback) {
           logger.info("🔄 Falling back to static challenge", {
-            reason: "AI generation failed"
+            reason: "AI generation failed",
           });
           return this.generateStaticChallenge(fullOptions);
         }
@@ -120,7 +121,7 @@ export class ChallengeService {
 
     // Use static challenge generation
     logger.info("📚 Using static challenge generation", {
-      reason: !this.config.preferAI ? "AI not preferred" : "AI not available"
+      reason: !this.config.preferAI ? "AI not preferred" : "AI not available",
     });
     return this.generateStaticChallenge(fullOptions);
   }

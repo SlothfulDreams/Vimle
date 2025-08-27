@@ -104,6 +104,8 @@ export interface ChallengeGenerationOptions {
   additionalRequirements?: string[];
   /** Override default API configuration */
   config?: Partial<GeminiGenerationConfig>;
+  /** Request timeout in milliseconds */
+  timeout?: number;
 }
 
 /**

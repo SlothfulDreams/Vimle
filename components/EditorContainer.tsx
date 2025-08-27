@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useCompletionHandler } from "@/hooks/useCompletionHandler";
 import { useDebounce } from "@/hooks/useDebounce";
 import { VimEditor } from "@/pages/index/VimEditor";
-import type { DailyChallenge, TimerState, VimMotion } from "@/types";
+import type { DailyChallenge, VimMotion } from "@/types";
 
 /**
  * Props for the EditorContainer component
@@ -103,7 +103,12 @@ export function EditorContainer({
       isRunning: timer.isRunning,
       shouldComplete: completion.shouldComplete,
     }),
-    [leftEditorContent, rightEditorContent, timer.isRunning, completion.shouldComplete],
+    [
+      leftEditorContent,
+      rightEditorContent,
+      timer.isRunning,
+      completion.shouldComplete,
+    ],
   );
 
   useDebounce(

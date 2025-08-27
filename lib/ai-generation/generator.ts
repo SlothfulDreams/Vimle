@@ -4,9 +4,9 @@
  * Handles service selection, retry logic, and fallback mechanisms
  */
 
+import type { DailyChallenge } from "../../types/index.js";
 import { getChallengeFromPool } from "../challenge/static-pool.js";
 import { logger } from "../logger.js";
-import type { DailyChallenge } from "../../types/index.js";
 import {
   getAIConfig,
   getGeminiConfig,
@@ -64,7 +64,12 @@ async function getGeminiService(): Promise<GeminiChallengeService> {
   if (!geminiService && isGeminiEnabled()) {
     const { GeminiChallengeService } = await import("./gemini");
     const cfg = getGeminiConfig();
-    geminiService = new GeminiChallengeService(cfg.apiKey!, cfg.model);
+
+    if (!cfg.apiKey) {
+      throw new Error("Gemini API key is required but not configured");
+    }
+
+    geminiService = new GeminiChallengeService(cfg.apiKey, cfg.model);
     logger.debug("Created Gemini service instance", { model: cfg.model });
   }
 
@@ -88,13 +93,17 @@ export async function generateTodaysChallenge(
     retries = getAIConfig().maxRetries,
   } = options || {};
 
-  logger.info("🎯 Starting challenge generation", { date, difficulty, retries });
+  logger.info("🎯 Starting challenge generation", {
+    date,
+    difficulty,
+    retries,
+  });
 
   // If no AI services are enabled, use static fallback immediately
   if (!isGeminiEnabled()) {
     logger.warn("⚠️ No AI services enabled, using static fallback immediately", {
       geminiEnabled: isGeminiEnabled(),
-      reason: "API key missing or service disabled"
+      reason: "API key missing or service disabled",
     });
     return generateStaticFallback(date, difficulty);
   }
@@ -114,7 +123,9 @@ export async function generateTodaysChallenge(
       difficulty,
       generatedBy: result.generatedBy,
       title: result.challenge.title,
-      generationTime: result.metadata?.generationTimeMs ? `${result.metadata.generationTimeMs}ms` : "unknown",
+      generationTime: result.metadata?.generationTimeMs
+        ? `${result.metadata.generationTimeMs}ms`
+        : "unknown",
     });
 
     return result;
@@ -129,14 +140,14 @@ export async function generateTodaysChallenge(
     // Fall back to static challenges if enabled
     if (getAIConfig().enableFallback) {
       logger.info("🔄 Falling back to static challenge generation", {
-        reason: "AI generation failed after retries"
+        reason: "AI generation failed after retries",
       });
       return generateStaticFallback(date, difficulty);
     }
 
     // If fallback is disabled, re-throw the error
     logger.error("💥 Fallback disabled - throwing error", {
-      fallbackEnabled: getAIConfig().enableFallback
+      fallbackEnabled: getAIConfig().enableFallback,
     });
     throw error;
   }
@@ -159,7 +170,10 @@ async function generateWithRetries(
 
   while (attemptCount <= retries) {
     try {
-      logger.debug(`🎲 Attempt ${attemptCount + 1}/${retries + 1}`, { date, difficulty });
+      logger.debug(`🎲 Attempt ${attemptCount + 1}/${retries + 1}`, {
+        date,
+        difficulty,
+      });
 
       // Try Gemini service first (add other services here later)
       if (isGeminiEnabled()) {
@@ -168,9 +182,7 @@ async function generateWithRetries(
 
         const generationOptions: ChallengeGenerationOptions = {
           difficulty,
-          config: {
-            timeout: getAIConfig().requestTimeout,
-          },
+          timeout: getAIConfig().requestTimeout,
         };
 
         const result = await service.generateChallenge(generationOptions);
