@@ -10,7 +10,11 @@ if (typeof window !== "undefined") {
   throw new Error("Database client should only be imported on the server side");
 }
 
-import { PrismaClient } from "../lib/generated/prisma/client.js";
+import {
+  type Challenge,
+  PrismaClient,
+  type User,
+} from "@prisma/client";
 
 // Global variable to store the Prisma client instance
 declare global {
@@ -53,7 +57,7 @@ export async function ensureUser(
   email?: string,
   name?: string,
   retryCount = 0,
-): Promise<any> {
+): Promise<User> {
   try {
     const user = await db.user.upsert({
       where: { id: userId },
@@ -99,7 +103,7 @@ export async function ensureChallenge(
   title: string,
   difficulty: string,
   retryCount = 0,
-): Promise<any> {
+): Promise<Challenge> {
   try {
     const challenge = await db.challenge.upsert({
       where: { id: challengeId },

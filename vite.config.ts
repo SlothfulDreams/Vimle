@@ -1,7 +1,7 @@
-import vercel from "@vite-plugin-vercel/vike";
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
 import devServer from "@hono/vite-dev-server";
+import tailwindcss from "@tailwindcss/vite";
+import vercel from "@vite-plugin-vercel/vike";
+import react from "@vitejs/plugin-react";
 import vike from "vike/plugin";
 import { defineConfig } from "vite";
 
@@ -30,6 +30,11 @@ export default defineConfig({
 
   build: {
     target: "es2022",
+  },
+
+  ssr: {
+    noExternal: [],
+    external: ["@prisma/client", "prisma"],
   },
 
   vercel: {
