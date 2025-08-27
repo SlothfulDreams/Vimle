@@ -30,4 +30,4 @@ export const GET = handle(app);
 
 export const POST = handle(app);
 
-export default process.env.NODE_ENV === "production" ? undefined : app;
+export default app;
