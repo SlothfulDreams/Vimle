@@ -2,19 +2,19 @@
  * Vercel Serverless Function Entry Point
  * 
  * This file serves as the main entry point for Vercel's serverless functions.
- * It handles both SSR (Server-Side Rendering) via Vike and tRPC API routes
- * by importing and re-exporting the Hono app handlers from hono-entry.ts.
+ * It handles both SSR (Server-Side Rendering) via Vike and tRPC API routes.
  */
 
-// Import the Hono app handlers from the main entry point
-import { GET, POST } from '../hono-entry.js';
+// Use CommonJS import for better Vercel compatibility
+const { GET, POST } = require('../dist/server/hono-entry.js');
 
-// Re-export the handlers for Vercel's serverless function runtime
-export { GET, POST };
+// Export handlers for Vercel's serverless function runtime
+module.exports.GET = GET;
+module.exports.POST = POST;
 
 // For any other HTTP methods, use GET handler as fallback
-export const PUT = GET;
-export const DELETE = GET;
-export const PATCH = GET;
-export const OPTIONS = GET;
-export const HEAD = GET;
+module.exports.PUT = GET;
+module.exports.DELETE = GET;
+module.exports.PATCH = GET;
+module.exports.OPTIONS = GET;
+module.exports.HEAD = GET;
