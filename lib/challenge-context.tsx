@@ -31,13 +31,11 @@ interface ChallengeContextType {
   loading: boolean;
 
   // UI states
-  showTomorrowScreen: boolean;
   showCompletionModal: boolean;
 
   // Actions
   submitCompletion: (timeMs: number) => Promise<void>;
   refreshChallenge: () => Promise<void>;
-  setTomorrowScreen: (show: boolean) => void;
   setCompletionModal: (show: boolean) => void;
 }
 
@@ -79,7 +77,6 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   // UI state management
-  const [showTomorrowScreen, setShowTomorrowScreen] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Hydration-safe mounting effect
@@ -176,18 +173,18 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [mounted, todaysChallenge, user?.id]);
 
-  // Check if tomorrow screen should be shown
-  const getTomorrowScreenKey = useCallback(() => {
+  // Check if completion modal has been shown for today
+  const getCompletionModalKey = useCallback(() => {
     if (!todaysChallenge) return null;
-    return `tomorrow_screen_${todaysChallenge.date}`;
+    return `completion_modal_${todaysChallenge.date}`;
   }, [todaysChallenge]);
 
-  const checkIfTomorrowScreenSeen = useCallback(() => {
+  const checkIfCompletionModalSeen = useCallback(() => {
     if (typeof window === "undefined") return true; // SSR safe default
-    const tomorrowKey = getTomorrowScreenKey();
-    if (!tomorrowKey) return true;
-    return sessionStorage.getItem(tomorrowKey) === "true";
-  }, [getTomorrowScreenKey]);
+    const modalKey = getCompletionModalKey();
+    if (!modalKey) return true;
+    return sessionStorage.getItem(modalKey) === "true";
+  }, [getCompletionModalKey]);
 
   // Handle loading state
   useEffect(() => {
@@ -201,18 +198,19 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
   // User can attempt if they haven't completed it yet
   const canAttempt = !isCompleted;
 
-  // Determine tomorrow screen visibility when challenge is completed
+  // Show completion modal when challenge is completed (both immediate and revisit)
   useEffect(() => {
     if (!loading && isCompleted && todaysChallenge) {
-      const tomorrowScreenSeen = checkIfTomorrowScreenSeen();
+      const completionModalSeen = checkIfCompletionModalSeen();
 
-      if (!tomorrowScreenSeen) {
-        setShowTomorrowScreen(true);
+      if (!completionModalSeen) {
+        // Show modal for users who completed but haven't seen the modal yet
+        setShowCompletionModal(true);
 
-        // Mark tomorrow screen as seen when it's displayed
-        const tomorrowKey = getTomorrowScreenKey();
-        if (tomorrowKey && typeof window !== "undefined") {
-          sessionStorage.setItem(tomorrowKey, "true");
+        // Mark completion modal as seen when it's displayed
+        const modalKey = getCompletionModalKey();
+        if (modalKey && typeof window !== "undefined") {
+          sessionStorage.setItem(modalKey, "true");
         }
       }
     }
@@ -220,8 +218,8 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     loading,
     isCompleted,
     todaysChallenge,
-    checkIfTomorrowScreenSeen,
-    getTomorrowScreenKey,
+    checkIfCompletionModalSeen,
+    getCompletionModalKey,
   ]);
 
   // Submit completion
@@ -357,11 +355,6 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
-  // Set tomorrow screen visibility
-  const setTomorrowScreen = useCallback((show: boolean) => {
-    setShowTomorrowScreen(show);
-  }, []);
-
   // Set completion modal visibility
   const setCompletionModal = useCallback((show: boolean) => {
     setShowCompletionModal(show);
@@ -385,11 +378,9 @@ export function ChallengeProvider({ children }: { children: React.ReactNode }) {
     isCompleted,
     canAttempt,
     loading,
-    showTomorrowScreen,
     showCompletionModal,
     submitCompletion,
     refreshChallenge,
-    setTomorrowScreen,
     setCompletionModal,
   };
 

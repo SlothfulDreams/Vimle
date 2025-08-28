@@ -1,4 +1,3 @@
-import { lazy, Suspense } from "react";
 import { ChallengeDisplay } from "@/components/ChallengeDisplay";
 import { EditorContainer } from "@/components/EditorContainer";
 import { LoadingScreen } from "@/components/LoadingScreen";
@@ -14,14 +13,6 @@ import { Instructions } from "./Instructions";
 import { Navbar } from "./Navbar";
 
 /**
- * Lazy load conditional components for better performance
- * Code splitting ensures TomorrowScreen is only loaded when needed
- */
-const TomorrowScreen = lazy(() =>
-  import("./TomorrowScreen").then((m) => ({ default: m.TomorrowScreen })),
-);
-
-/**
  * Main game component for Vimle challenge interface
  * Orchestrates the daily coding challenge experience with vim editors
  */
@@ -32,7 +23,6 @@ export default function VimleGame() {
     isCompleted,
     canAttempt,
     loading,
-    showTomorrowScreen,
     showCompletionModal,
     setCompletionModal,
   } = useChallenge();
@@ -53,27 +43,6 @@ export default function VimleGame() {
   // Show loading state while fetching challenge data
   if (loading) {
     return <LoadingScreen />;
-  }
-
-  // Show tomorrow screen for completed challenges
-  if (showTomorrowScreen && todaysChallenge && userAttempt) {
-    return (
-      <Suspense
-        fallback={
-          <LoadingScreen
-            message="Loading completion screen..."
-            description="Preparing your challenge results"
-          />
-        }
-      >
-        <TomorrowScreen
-          challengeTitle={todaysChallenge.title}
-          completionTimeMs={userAttempt.timeMs || 0}
-          completedAt={userAttempt.completedAt || new Date()}
-          difficulty={todaysChallenge.difficulty}
-        />
-      </Suspense>
-    );
   }
 
   // Main challenge interface
