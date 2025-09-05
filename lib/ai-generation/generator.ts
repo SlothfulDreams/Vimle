@@ -257,6 +257,7 @@ function generateStaticFallback(
   const challenge: DailyChallenge = {
     id: `${date}-static-${difficulty}`,
     date,
+    startingContent: staticChallenge.startingContent,
     content: staticChallenge.content,
     title: staticChallenge.title,
     difficulty,
